@@ -31,7 +31,10 @@ def main():
     # 1) convert merged HF model → .litertlm (multimodal E4B).
     #    uvx runs the tool without a persistent install (robust in a subprocess).
     sh(
-        "uvx --from litert-torch-nightly litert-torch export_hf "
+        # --with pillow/torchvision: the multimodal export needs them for
+        # AutoImageProcessor, but litert-torch-nightly doesn't declare them.
+        "uvx --from litert-torch-nightly --with pillow --with torchvision "
+        "litert-torch export_hf "
         f"--model={HF_MODEL} "
         f"--output_dir={OUT_DIR} "
         "--externalize_embedder "

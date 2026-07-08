@@ -49,7 +49,8 @@ def main():
 
     # 3) upload the on-device model to HF, UNGATED (Apache-2.0) so the app
     #    downloads it on first run with no login.
-    sh(f"huggingface-cli upload {OUT_REPO} {OUT_DIR} --repo-type model")
+    # `huggingface-cli` is deprecated (and a no-op on molab) — use `hf`.
+    sh(f"hf upload {OUT_REPO} {OUT_DIR} --repo-type model")
 
     print(f"\n✅ On-device model: https://huggingface.co/{OUT_REPO}")
     print("   Point the app's model URL at:")

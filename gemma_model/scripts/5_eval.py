@@ -26,7 +26,10 @@ def gen_fn(model_name):
 
     def run(messages):
         prompt = tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        ids = tok(prompt, return_tensors="pt").to(model.device)
+        # text= keyword: for Gemma 4, `tok` is a multimodal Processor whose first
+        # positional arg is `images` — passing the prompt positionally sends
+        # text=None and crashes inside processing_gemma4.
+        ids = tok(text=prompt, return_tensors="pt").to(model.device)
         out = model.generate(**ids, max_new_tokens=256, do_sample=False)
         return tok.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True)
 

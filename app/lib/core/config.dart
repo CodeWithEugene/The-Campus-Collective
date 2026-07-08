@@ -23,7 +23,7 @@ class Config {
   /// the Supabase manifest per-device once `gemma_model/molab/tcc_convert.py`
   /// has produced + uploaded the on-device `.litertlm`.
   static const String tunedModelName = 'Gemma 4 TCC (E4B)';
-  static const int tunedModelSizeBytes = 3865470566; // ~3.6 GB (E4B .litertlm)
+  static const int tunedModelSizeBytes = 4257631456; // exact int4 .litertlm size
   static const String tunedModelUrl =
       'https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-litertlm/resolve/main/model.litertlm';
 

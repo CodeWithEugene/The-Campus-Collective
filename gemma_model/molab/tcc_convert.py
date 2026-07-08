@@ -38,7 +38,9 @@ def main():
         f"--model={HF_MODEL} "
         f"--output_dir={OUT_DIR} "
         "--externalize_embedder "
-        "--quantization_recipe dynamic_wi8_afp32 "
+        # int4 weights — int8 (dynamic_wi8_afp32) yields an ~8.3 GB bundle that
+        # no target phone can hold; wi4 lands ~4 GB like litert-community's E4B.
+        "--quantization_recipe dynamic_wi4_afp32 "
         '--vision_encoder_quantization_recipe "" '
         "--task image_text_to_text"
     )

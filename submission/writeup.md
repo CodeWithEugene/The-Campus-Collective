@@ -57,7 +57,7 @@ Supabase (distribution only — RLS-locked, sees zero user data)
 - Edge Gemma is the weakest tool-caller → few tools, flat schemas, per-agent scoping, and a deterministic keyword-intent fallback if a call is malformed.
 - Budget MediaTek chips often have no usable GPU delegate → token streaming, capped answer lengths, and rich result cards so short answers still feel complete (~2–5 tok/s on CPU fallback vs. 40+ on flagship GPUs).
 - 6 GB RAM floor → E2B (2.6 GB) is the default; the manifest serves our E4B fine-tune only to 8 GB+ devices.
-- 2.6 GB on student data plans → resumable download with sha-256 verify, an explicit "tumia Wi-Fi" warning, and a Limited Mode so the app is never a dead-end without the model.
+- 2.6 GB on student data plans → resumable download with sha-256 verify, an explicit "tumia Wi-Fi" warning, detailed exception reporting in the UI for easy debugging, and a Limited Mode so the app is never a dead-end without the model.
 
 ## 5 · Our fine-tune: `gemma-4-tcc`
 

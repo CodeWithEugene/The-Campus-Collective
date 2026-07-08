@@ -197,6 +197,17 @@ class _ModelDownloadScreenState extends ConsumerState<ModelDownloadScreen> {
           children: [
             const Text('Download failed. Check your connection.',
                 style: TextStyle(color: TCC.danger, fontSize: 13)),
+            if (s.error != null) ...[
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  s.error!,
+                  style: const TextStyle(color: TCC.textMuted, fontSize: 11),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             FilledButton(onPressed: n.retry, child: const Text('Retry')),
           ],

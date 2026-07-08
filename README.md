@@ -124,5 +124,3 @@ Built by **Eugene Mutembei** ([@CodeWithEugene](https://github.com/CodeWithEugen
 
 - Code: [MIT License](LICENSE)
 - Gemma 4 & our fine-tuned models: Apache 2.0
-
-*Poa! 🎉*

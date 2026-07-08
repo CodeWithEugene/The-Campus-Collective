@@ -1,0 +1,7 @@
+.env
+.venv/
+out/
+data/train.jsonl
+data/eval.jsonl
+__pycache__/
+*.pyc

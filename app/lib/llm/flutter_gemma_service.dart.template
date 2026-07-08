@@ -1,0 +1,108 @@
+// ============================================================================
+// REAL on-device implementation of GemmaService using flutter_gemma.
+//
+// Kept as a .template (not compiled) so the app keeps building on the stub until
+// this is validated on a physical 8 GB+ Android (E4B needs it; E2B runs on 6 GB).
+//
+// ⚠️ TOOLCHAIN: flutter_gemma 1.2.2 (this template's API) needs Dart >= 3.12.
+//    This repo currently ships Flutter 3.41 / Dart 3.11.5, so FIRST run
+//    `flutter upgrade` (gets Dart >= 3.12), OR use flutter_gemma ^0.10.2 on the
+//    current toolchain (older API — the createModel/createChat calls below differ
+//    slightly; check fluttergemma.dev for the 0.10.x surface).
+//
+// To ACTIVATE:
+//   1) flutter upgrade         # to get Dart >= 3.12 for flutter_gemma 1.2.2
+//   2) pubspec.yaml → dependencies:  flutter_gemma: 1.2.2   ; then flutter pub get
+//   3) android/app/build.gradle.kts → minSdk = 26  (LiteRT/MediaPipe requires it)
+//   4) Rename this file to flutter_gemma_service.dart (drop .template).
+//   5) core/app_state.dart → gemmaProvider: return FlutterGemmaService()..init();
+//   6) The model URL comes from Supabase model_manifest (§17) or Config.defaultModelUrl
+//      — already pointed at your fine-tune: Eugeniuss/gemma-4-tcc-e4b-litertlm
+//      (produced by gemma_model/molab/tcc_convert.py).
+//
+// API below follows flutter_gemma's documented surface (2026). Verify method names
+// against the exact version you pin — the plugin moves fast (project.md §8).
+// ============================================================================
+
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter_gemma/flutter_gemma.dart';
+import 'gemma_service.dart';
+
+class FlutterGemmaService implements GemmaService {
+  final _plugin = FlutterGemmaPlugin.instance;
+  InferenceModel? _model;
+  InferenceChat? _chat;
+  bool _ready = false;
+
+  Future<void> init({String? modelUrl}) async {
+    // Model file is downloaded by the onboarding flow (background_downloader) and
+    // registered here; or use the plugin's ModelFileManager for fromNetwork().
+    _model = await _plugin.createModel(
+      modelType: ModelType.gemmaIt,
+      preferredBackend: PreferredBackend.gpu, // falls back to CPU on budget chips
+      maxTokens: 1024,
+      supportImage: true, // Gemma 4 E2B/E4B are multimodal
+    );
+    _chat = await _model!.createChat(temperature: 0.7, topK: 40);
+    _ready = true;
+  }
+
+  @override
+  Future<bool> get isModelReady async => _ready;
+
+  @override
+  Stream<String> chat(String prompt, {String? imagePath, String? agent}) async* {
+    final chat = _chat!;
+    final sys = _systemFor(agent);
+    if (imagePath != null) {
+      await chat.addQueryChunk(Message.withImage(
+        text: '$sys\n\n$prompt', imageBytes: await _bytes(imagePath), isUser: true));
+    } else {
+      await chat.addQueryChunk(Message.text(text: '$sys\n\n$prompt', isUser: true));
+    }
+    yield* chat.generateChatResponseAsync().map((t) => t.token ?? '');
+  }
+
+  @override
+  Future<String> route(String text) async {
+    final r = await _once(
+      'Classify this student message into exactly one of: somo, karani, hustle, ratiba. '
+      'Reply with only the label.\n\nMessage: $text');
+    final m = RegExp(r'somo|karani|hustle|ratiba').firstMatch(r.toLowerCase());
+    return m?.group(0) ?? 'somo';
+  }
+
+  @override
+  Future<Map<String, dynamic>> structured(String prompt,
+      {String? imagePath, required String schemaHint}) async {
+    final out = await _once(
+      '$prompt\n\nRespond with ONLY valid minified JSON for a "$schemaHint" result.',
+      imagePath: imagePath);
+    final match = RegExp(r'\{.*\}', dotAll: true).firstMatch(out);
+    return match != null ? jsonDecode(match.group(0)!) as Map<String, dynamic> : {};
+  }
+
+  Future<String> _once(String prompt, {String? imagePath}) async {
+    final buf = StringBuffer();
+    await for (final t in chat(prompt, imagePath: imagePath)) {
+      buf.write(t);
+    }
+    return buf.toString();
+  }
+
+  String _systemFor(String? agent) => switch (agent) {
+        'hustle' => 'You are Hustle, TCC\'s money agent. Be practical about student finances.',
+        'karani' => 'You are Karani, TCC\'s bureaucracy agent. Explain campus documents simply and cite sources.',
+        'ratiba' => 'You are Ratiba, TCC\'s day planner.',
+        _ => 'You are Somo, TCC\'s study helper.',
+      } + ' Reply in the user\'s language (English, Kiswahili or Sheng).';
+
+  Future<List<int>> _bytes(String path) async => await File(path).readAsBytes();
+
+  @override
+  void dispose() {
+    _chat = null;
+    _model?.close();
+  }
+}

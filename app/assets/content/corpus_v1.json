@@ -1,0 +1,27 @@
+{
+  "kind": "corpus",
+  "version": 1,
+  "note": "Starter campus-facts corpus for RAG grounding. Chunks cite their source. To be expanded with chunked UoEm Student Handbook 2024/25, fee structure and HELB/HEF public guidance PDFs.",
+  "chunks": [
+    {
+      "id": "uoem-basics-1",
+      "source": "University of Embu website (embuni.ac.ke)",
+      "text": "The University of Embu is a public university located in Embu town, Embu County, Kenya. It has roughly 8,000–9,000 students. The academic year runs September to August with two 16-week semesters and a May–August trimester."
+    },
+    {
+      "id": "uoem-hostels-1",
+      "source": "UoEm Accommodation Department (departments.embuni.ac.ke/accommodation)",
+      "text": "University of Embu hostel booking is done online through the university hostel booking portal (app.embuni.ac.ke/hostels). Rooms are limited and allocated on a first-come basis at the start of each semester. Off-campus hostels are available in Embu town and along the Embu–Meru highway."
+    },
+    {
+      "id": "helb-basics-1",
+      "source": "HELB public guidance (helb.co.ke)",
+      "text": "HELB (Higher Education Loans Board) loans are applied for through the Higher Education Financing (HEF) portal (hef.co.ke). First-time applicants register with their KCSE index number and national ID. Funding under the student-centred model combines scholarships, loans and household contributions, and allocations depend on assessed need bands. Always verify current deadlines on the official portal — funding rules have changed repeatedly since 2024."
+    },
+    {
+      "id": "fees-basics-1",
+      "source": "UoEm Fee Structure page (embuni.ac.ke/fee-structure)",
+      "text": "University of Embu fee structures are published per programme on the university website. Fee balances and payment deadlines are communicated through the student portal. Government-sponsored students pay a subsidised fee; the balance is expected before examination card issuance. Verify your exact fee balance with the Finance Office."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "matatu_fares",
+  "version": 1,
+  "disclaimer": "SAMPLE representative fares for demo — matatu fares are informal and fluctuate. Verify locally; fares spike at school opening/closing, weekends, rain and evenings.",
+  "currency": "KES",
+  "peak_multiplier": 1.5,
+  "rain_multiplier": 1.5,
+  "routes": [
+    { "from": "University of Embu", "to": "Embu Town (CBD)", "base_fare": 50, "sample": true },
+    { "from": "Embu Town", "to": "Nairobi (Tea Room)", "base_fare": 400, "sample": true },
+    { "from": "Embu Town", "to": "Runyenjes", "base_fare": 100, "sample": true },
+    { "from": "Embu Town", "to": "Meru", "base_fare": 250, "sample": true },
+    { "from": "Embu Town", "to": "Kiritiri (Mbeere)", "base_fare": 120, "sample": true },
+    { "from": "Embu Town", "to": "Chuka", "base_fare": 150, "sample": true }
+  ]
+}

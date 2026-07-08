@@ -1,0 +1,60 @@
+# TCC Gemma fine-tuning configuration.
+
+model:
+  # Base to fine-tune (edge tier — runs on-device). Unsloth mirror loads fastest.
+  base_id: "unsloth/gemma-4-E4B-it"
+  # Set to "unsloth/gemma-4-E2B-it" to also produce the 6 GB-phone variant.
+  max_seq_len: 2048
+  load_in_4bit: true          # QLoRA
+
+lora:
+  r: 16
+  alpha: 16
+  dropout: 0.0
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+train:
+  epochs: 3
+  batch_size: 8               # 96 GB GPU can go higher; keep adapter small
+  grad_accum: 2
+  lr: 2.0e-4
+  warmup_ratio: 0.03
+  weight_decay: 0.01
+  seed: 3407
+  output_dir: "out/adapter"
+
+data:
+  train_path: "data/train.jsonl"
+  eval_path: "data/eval.jsonl"
+  # Public Swahili SFT data to mix in (real HF dataset IDs).
+  public_sources:
+    - id: "CohereForAI/aya_collection_language_split"
+      config: "swahili"
+      max_rows: 2000
+    - id: "lelapa/Inkuba-instruct"
+      config: null
+      max_rows: 2000
+  kiembu_path: "data/kiembu_phrasebook.jsonl"
+  # Programmatic generation volumes
+  tool_examples: 1500
+  extraction_examples: 800
+
+distill:
+  enabled: false             # set true to teacher-distill trilingual chat data
+  teacher_id: "google/gemma-4-26B-A4B-it"
+  seeds_dir: "data/seeds"
+  per_seed: 4
+  max_new_tokens: 512
+
+hub:
+  # CHANGE to your Hugging Face org/username.
+  repo_id: "campus-collective/gemma-4-tcc-e4b"
+  lora_repo_id: "campus-collective/gemma-4-tcc-e4b-lora"
+  private: false             # Apache-2.0 → keep public + UNGATED so the app downloads with no login

@@ -1,0 +1,24 @@
+# Fine-tuning (run on the molab RTX Pro 6000 — CUDA)
+# Unsloth pulls compatible torch/transformers/trl/peft/bitsandbytes.
+unsloth
+trl>=0.12.0
+transformers>=4.53.0
+peft>=0.14.0
+bitsandbytes>=0.45.0
+accelerate>=1.2.0
+datasets>=3.2.0
+huggingface_hub>=0.27.0
+python-dotenv
+
+# Data generation (teacher distillation)
+vllm>=0.6.0            # serve Gemma 4 26B/31B as the teacher for high throughput
+pyyaml
+tqdm
+
+# On-device conversion (step 4) — install in a SEPARATE env if it conflicts with unsloth
+# ai-edge-torch>=0.3.0
+# ai-edge-litert
+# mediapipe
+
+# Eval
+scikit-learn

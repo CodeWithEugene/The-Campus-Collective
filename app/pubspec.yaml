@@ -1,0 +1,58 @@
+name: campus_collective
+description: "The Campus Collective — an offline-first, on-device AI campus companion."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State & routing
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.6.2
+
+  # Local storage (offline-first — the app's real database)
+  drift: ^2.23.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.0
+  shared_preferences: ^2.3.4
+
+  # Backend (distribution-only: manifest, content packs, feedback)
+  supabase_flutter: ^2.8.4
+
+  # Model + file delivery
+  background_downloader: ^8.9.5
+  crypto: ^3.0.6
+
+  # Media & platform
+  image_picker: ^1.1.2
+  flutter_svg: ^2.0.16
+  share_plus: ^10.1.4
+  url_launcher: ^6.3.1
+  flutter_local_notifications: ^18.0.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.23.1
+  build_runner: ^2.4.14
+  flutter_launcher_icons: ^0.14.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/
+    - assets/content/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/brand/icon_1024.png"
+  remove_alpha_ios: true

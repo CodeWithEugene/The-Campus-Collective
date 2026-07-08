@@ -1,0 +1,29 @@
+{
+  "kind": "safety_contacts",
+  "version": 1,
+  "disclaimer": "Numbers provided for convenience — verify locally. Campus numbers are sample data until confirmed with University of Embu offices.",
+  "sections": [
+    {
+      "title": "Campus — University of Embu",
+      "note": "SAMPLE DATA — confirm with campus offices before release",
+      "contacts": [
+        { "name": "Campus Security (Main Gate)", "phone": null, "sms": false, "sample": true },
+        { "name": "University Clinic", "phone": null, "sms": false, "sample": true },
+        { "name": "Dean of Students", "phone": null, "sms": false, "sample": true },
+        { "name": "Hostel Warden", "phone": null, "sms": false, "sample": true },
+        { "name": "Fees Office", "phone": null, "sms": false, "sample": true }
+      ]
+    },
+    {
+      "title": "National — Kenya",
+      "contacts": [
+        { "name": "Police / Emergency", "phone": "999", "alt": "112", "sms": false },
+        { "name": "GBV Hotline (Healthcare Assistance Kenya)", "phone": "1195", "sms": false },
+        { "name": "Childline Kenya", "phone": "116", "sms": false },
+        { "name": "DCI (Cybercrime reporting)", "phone": "0800722203", "sms": false },
+        { "name": "Kenya Red Cross", "phone": "1199", "sms": false },
+        { "name": "HELB Helpline", "phone": "0711052000", "sms": false }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "kiembu_phrasebook",
+  "version": 1,
+  "status": "PLACEHOLDER — to be replaced by hand-collected phrases from Kiembu-speaking students on campus. Do not present as authoritative until reviewed by native speakers.",
+  "language": "Kiembu (Kīembu)",
+  "entries": [
+    { "kiembu": "Wĩ mwega?", "swahili": "U hali gani?", "english": "How are you? / Are you well?", "reviewed": false },
+    { "kiembu": "Ndĩ mwega", "swahili": "Niko poa", "english": "I am well", "reviewed": false },
+    { "kiembu": "Nĩ wega", "swahili": "Asante / ni vizuri", "english": "Thank you / it is good", "reviewed": false }
+  ],
+  "collection_plan": "Collect 100–300 pairs (greetings, campus vocabulary, common questions) from Kiembu-speaking students; each entry marked reviewed:true after native-speaker verification."
+}

@@ -1,0 +1,18 @@
+# Tooling state
+.claude/
+.claude-flow/
+.DS_Store
+
+# Supabase local state
+supabase/.temp/
+
+# Python
+gemma_model/.venv/
+gemma_model/__pycache__/
+gemma_model/**/__pycache__/
+gemma_model/.env
+gemma_model/out/
+
+# Logs
+app/flutter_01.log
+*.log

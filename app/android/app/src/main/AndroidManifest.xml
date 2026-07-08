@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Model download (first-run, ~2.6 GB) + Supabase manifest/content refresh.
+         All AI inference is offline; INTERNET is delivery-only. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="TCC"
         android:name="${applicationName}"

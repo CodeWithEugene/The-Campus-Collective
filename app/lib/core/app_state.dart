@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/database.dart';
+import '../llm/flutter_gemma_service.dart';
 import '../llm/gemma_service.dart';
 
 /// Singletons.
@@ -11,8 +12,9 @@ final dbProvider = Provider<AppDatabase>((ref) {
 });
 
 final gemmaProvider = Provider<GemmaService>((ref) {
-  // Swap StubGemmaService → FlutterGemmaService once validated on-device.
-  final g = StubGemmaService();
+  // Real on-device Gemma 4 via flutter_gemma (LiteRT-LM). StubGemmaService
+  // remains available for widget tests.
+  final g = FlutterGemmaService();
   ref.onDispose(g.dispose);
   return g;
 });

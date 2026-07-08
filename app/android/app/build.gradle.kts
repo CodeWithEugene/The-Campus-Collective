@@ -26,7 +26,7 @@ android {
         applicationId = "com.campuscollective.campus_collective"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 26 // LiteRT/MediaPipe (flutter_gemma) requires 26+
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

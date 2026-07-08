@@ -60,7 +60,7 @@ We fine-tuned **Gemma 4 E4B** on an RTX Pro 6000 (96 GB, molab.marimo.io) using 
 | LoRA adapter | [`Eugeniuss/gemma-4-tcc-e4b-lora`](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-lora) |
 | On-device `.litertlm` build | [`Eugeniuss/gemma-4-tcc-e4b-litertlm`](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-litertlm) |
 
-The full pipeline (data generation → QLoRA training → merge & push → `litert-torch` on-device conversion → before/after eval) is in [`gemma_model/`](gemma_model/). The app defaults to the fine-tune on 8 GB+ phones and falls back to stock **E2B** on 6 GB phones — selected per-device by a remote model manifest, so model upgrades need no app update.
+The full pipeline (data generation → QLoRA training → merge & push → `litert-torch` on-device conversion → before/after eval) is in [`gemma_model/`](gemma_model/). The shipped app runs stock **Gemma 4 E2B** (safe on 6 GB phones); the fine-tuned E4B build swaps in per-device via a remote model manifest once its on-device conversion is published — model upgrades need no app update.
 
 ## Architecture
 
@@ -98,7 +98,7 @@ project.md     The complete build strategy, design system, and 60+ page UX inven
 
 ## Build from source
 
-Requirements: Flutter 3.41+ (Dart ≥ 3.11.5), Android SDK.
+Requirements: Flutter 3.44+ (Dart ≥ 3.12, required by `flutter_gemma`), Android SDK.
 
 ```bash
 cd app

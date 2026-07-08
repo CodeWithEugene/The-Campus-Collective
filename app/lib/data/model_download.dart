@@ -1,6 +1,10 @@
 import 'dart:async';
+
+import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/config.dart';
+import '../llm/flutter_gemma_service.dart';
 
 enum DownloadPhase { idle, downloading, paused, failed, verifying, done }
 
@@ -38,63 +42,108 @@ class ModelDownloadState {
   );
 }
 
-/// Manages the on-device model download (project.md P05).
-///
-/// Uses `background_downloader` on device (resume across restarts + sha256
-/// verify). For the current build without an attached device, it simulates a
-/// realistic resumable download so the whole first-run flow is demoable. The
-/// real path is wired the same way — swap [_simulate] for the downloader task.
+/// Manages the real on-device model download (project.md P05) through
+/// flutter_gemma's ModelFileManager, which uses `background_downloader`
+/// underneath: resumable across interruptions and app restarts. The spec is
+/// shared with [FlutterGemmaService] so download and inference always agree
+/// on the model.
 class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   ModelDownloadNotifier() : super(const ModelDownloadState());
-  Timer? _timer;
 
-  void start() {
-    if (state.phase == DownloadPhase.done) return;
+  final _mgr = FlutterGemmaPlugin.instance.modelManager;
+  StreamSubscription<DownloadProgress>? _sub;
+  DateTime? _startedAt;
+
+  Future<void> start() async {
+    if (state.phase == DownloadPhase.done ||
+        state.phase == DownloadPhase.downloading) {
+      return;
+    }
     state = state.copyWith(phase: DownloadPhase.downloading, error: null);
-    _simulate();
-  }
-
-  void pause() {
-    _timer?.cancel();
-    state = state.copyWith(phase: DownloadPhase.paused);
-  }
-
-  void resume() {
-    state = state.copyWith(phase: DownloadPhase.downloading, error: null);
-    _simulate();
-  }
-
-  void retry() => resume();
-
-  void _simulate() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 120), (t) {
-      final next = (state.progress + 0.02).clamp(0.0, 1.0);
-      final received = (next * state.totalBytes).round();
-      final remaining = ((1 - next) * 30).round();
-      if (next >= 1.0) {
-        t.cancel();
+    try {
+      if (await _mgr.isModelInstalled(FlutterGemmaService.modelSpec)) {
         state = state.copyWith(
-          phase: DownloadPhase.verifying,
+          phase: DownloadPhase.done,
           progress: 1,
           receivedBytes: state.totalBytes,
         );
-        Future.delayed(const Duration(milliseconds: 900), () {
-          state = state.copyWith(phase: DownloadPhase.done);
-        });
-      } else {
-        state = state.copyWith(
-          progress: next,
-          receivedBytes: received,
-          etaText: '~$remaining sec left',
-        );
+        return;
       }
-    });
+      _startedAt = DateTime.now();
+      _sub = _mgr
+          .downloadModelWithProgress(FlutterGemmaService.modelSpec)
+          .listen(_onProgress, onError: _onError, onDone: _onDone);
+    } catch (e) {
+      _onError(e);
+    }
+  }
+
+  void _onProgress(DownloadProgress p) {
+    final frac = (p.overallProgress / 100).clamp(0.0, 1.0);
+    state = state.copyWith(
+      phase: DownloadPhase.downloading,
+      progress: frac,
+      receivedBytes: (frac * state.totalBytes).round(),
+      etaText: _eta(frac),
+    );
+  }
+
+  Future<void> _onDone() async {
+    state = state.copyWith(phase: DownloadPhase.verifying, progress: 1);
+    try {
+      final ok = await _mgr.validateModel(FlutterGemmaService.modelSpec);
+      if (!ok) {
+        state = state.copyWith(
+          phase: DownloadPhase.failed,
+          error: 'Model file failed verification — jaribu tena.',
+        );
+        return;
+      }
+      _mgr.setActiveModel(FlutterGemmaService.modelSpec);
+      state = state.copyWith(
+        phase: DownloadPhase.done,
+        receivedBytes: state.totalBytes,
+      );
+    } catch (e) {
+      _onError(e);
+    }
+  }
+
+  void _onError(Object e) {
+    _sub?.cancel();
+    _sub = null;
+    if (!mounted) return;
+    state = state.copyWith(phase: DownloadPhase.failed, error: e.toString());
+  }
+
+  /// Pausing cancels the stream; `background_downloader` keeps the partial
+  /// file, so the next [resume] continues from the last byte.
+  void pause() {
+    _sub?.cancel();
+    _sub = null;
+    state = state.copyWith(phase: DownloadPhase.paused);
+  }
+
+  void resume() => start();
+
+  void retry() {
+    state = state.copyWith(phase: DownloadPhase.idle, error: null);
+    start();
+  }
+
+  String? _eta(double frac) {
+    final started = _startedAt;
+    if (started == null || frac <= 0.01) return null;
+    final elapsed = DateTime.now().difference(started).inSeconds;
+    final remaining = (elapsed / frac * (1 - frac)).round();
+    if (remaining > 5400) return null; // beyond an ETA anyone believes
+    if (remaining >= 60) return '~${(remaining / 60).round()} min left';
+    return '~$remaining sec left';
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _sub?.cancel();
     super.dispose();
   }
 }

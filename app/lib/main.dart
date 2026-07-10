@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
+import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +18,12 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: TCC.bg,
   ));
+
+  // flutter_gemma's ServiceRegistry must exist before any modelManager call —
+  // without this, the first model download throws "FlutterGemma not
+  // initialized!". The LiteRT-LM engine is opt-in in 1.2.x and must be
+  // registered here for .litertlm inference.
+  await FlutterGemma.initialize(inferenceEngines: [LiteRtLmEngine()]);
 
   // Backend is distribution-only; failure to reach it must never block the app.
   try {

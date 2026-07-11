@@ -29,6 +29,56 @@ class _CopywriterScreenState extends ConsumerState<CopywriterScreen> {
   bool _busy = false;
   bool _editing = false;
 
+  /// User-added tones (persisted on-device).
+  List<String> _customTones = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _customTones =
+        ref.read(prefsProvider).valueOrNull?.getStringList('copyTones') ?? [];
+  }
+
+  Future<void> _addTone(LangPref lang) async {
+    final en = lang.flavor == 'english';
+    final name = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: TCC.surface2,
+        title: Text(en ? 'Custom tone' : 'Mhemko wako',
+            style: const TextStyle(color: TCC.text, fontSize: 18)),
+        content: TextField(
+          controller: name,
+          autofocus: true,
+          style: const TextStyle(color: TCC.text),
+          decoration: InputDecoration(
+              labelText: en ? 'e.g. funny, urgent…' : 'k.m. ucheshi, haraka…'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(en ? 'Cancel' : 'Ghairi')),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(en ? 'Add' : 'Ongeza')),
+        ],
+      ),
+    );
+    final label = name.text.trim();
+    name.dispose();
+    if (ok != true || label.isEmpty) return;
+    setState(() {
+      if (!_customTones.contains(label)) _customTones.add(label);
+      _tone = label;
+    });
+    await ref
+        .read(prefsProvider)
+        .valueOrNull
+        ?.setStringList('copyTones', _customTones);
+    if (_ad.isNotEmpty) _generate();
+  }
+
   @override
   void dispose() {
     _product.dispose();
@@ -54,7 +104,12 @@ class _CopywriterScreenState extends ConsumerState<CopywriterScreen> {
     });
     final gemma = ref.read(gemmaProvider);
     final price = _price.text.trim();
-    final prompt = 'Write a short, catchy WhatsApp Status advert in Sheng for a '
+    final adLang = switch (lang.flavor) {
+      'swahili' => 'Kiswahili',
+      'sheng' => 'Sheng',
+      _ => 'English',
+    };
+    final prompt = 'Write a short, catchy WhatsApp Status advert in $adLang for a '
         'student selling: $what${price.isEmpty ? '' : ' at KSh $price'}. '
         'Tone: $_tone. Add 2-3 emojis and a call to action to DM.';
     final buffer = StringBuffer();
@@ -131,9 +186,11 @@ class _CopywriterScreenState extends ConsumerState<CopywriterScreen> {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4)),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              for (final t in _tones) ...[
+              for (final t in _tones)
                 TccChip(
                   label: t.$2 == 'chill'
                       ? (lang.flavor == 'english' ? 'Chill' : 'Poa')
@@ -146,8 +203,23 @@ class _CopywriterScreenState extends ConsumerState<CopywriterScreen> {
                     if (_ad.isNotEmpty) _generate();
                   },
                 ),
-                const SizedBox(width: 8),
-              ],
+              for (final t in _customTones)
+                TccChip(
+                  label: t,
+                  icon: Icons.auto_awesome_rounded,
+                  selected: _tone == t,
+                  tint: TCC.hustle,
+                  onTap: () {
+                    setState(() => _tone = t);
+                    if (_ad.isNotEmpty) _generate();
+                  },
+                ),
+              TccChip(
+                label: lang.flavor == 'english' ? '+ Add' : '+ Ongeza',
+                icon: Icons.add_rounded,
+                tint: TCC.hustle,
+                onTap: () => _addTone(lang),
+              ),
             ],
           ),
           const SizedBox(height: 20),

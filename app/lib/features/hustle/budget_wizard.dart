@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,13 +32,85 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
   final _transport = TextEditingController();
   final _data = TextEditingController();
 
+  // User-defined labeled rows (project ask: budgets differ per student —
+  // e.g. bursary income, chama contribution, hostel wifi). Persisted locally.
+  final List<_CustomField> _extraIncome = [];
+  final List<_CustomField> _extraFixed = [];
+
   // Step 3 — generated categories
   bool _cooking = false;
   List<_CatDraft> _drafts = [];
 
   double get _monthlyIncome {
     double v(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
-    return v(_helb) / 4 + v(_allowance) + v(_side) + v(_otherIncome);
+    return v(_helb) / 4 +
+        v(_allowance) +
+        v(_side) +
+        v(_otherIncome) +
+        _extraIncome.fold(0.0, (s, f) => s + f.value);
+  }
+
+  double get _fixedTotal {
+    double v(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
+    return v(_rent) +
+        v(_transport) +
+        v(_data) +
+        _extraFixed.fold(0.0, (s, f) => s + f.value);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreInputs();
+  }
+
+  /// Pre-fill from the last accepted budget so a re-run doesn't start blank.
+  Future<void> _restoreInputs() async {
+    final prefs = ref.read(prefsProvider).valueOrNull;
+    final raw = prefs?.getString('budgetInputs');
+    if (raw == null) return;
+    final saved = jsonDecode(raw) as Map<String, dynamic>;
+    setState(() {
+      _helb.text = saved['helb'] ?? '';
+      _allowance.text = saved['allowance'] ?? '';
+      _side.text = saved['side'] ?? '';
+      _otherIncome.text = saved['other'] ?? '';
+      _rent.text = saved['rent'] ?? '';
+      _transport.text = saved['transport'] ?? '';
+      _data.text = saved['data'] ?? '';
+      for (final e in (saved['extraIncome'] as List? ?? const [])) {
+        _extraIncome.add(_CustomField(e['name'] ?? '', e['amount'] ?? ''));
+      }
+      for (final e in (saved['extraFixed'] as List? ?? const [])) {
+        _extraFixed.add(_CustomField(e['name'] ?? '', e['amount'] ?? ''));
+      }
+    });
+  }
+
+  Future<void> _saveInputs() async {
+    final prefs = ref.read(prefsProvider).valueOrNull;
+    if (prefs == null) return;
+    await prefs.setString(
+        'budgetInputs',
+        jsonEncode({
+          'helb': _helb.text,
+          'allowance': _allowance.text,
+          'side': _side.text,
+          'other': _otherIncome.text,
+          'rent': _rent.text,
+          'transport': _transport.text,
+          'data': _data.text,
+          'extraIncome': [
+            for (final f in _extraIncome)
+              if (f.name.text.trim().isNotEmpty)
+                {'name': f.name.text, 'amount': f.amount.text}
+          ],
+          'extraFixed': [
+            for (final f in _extraFixed)
+              if (f.name.text.trim().isNotEmpty)
+                {'name': f.name.text, 'amount': f.amount.text}
+          ],
+        }));
   }
 
   @override
@@ -53,6 +127,9 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
     ]) {
       c.dispose();
     }
+    for (final f in [..._extraIncome, ..._extraFixed]) {
+      f.dispose();
+    }
     for (final d in _drafts) {
       d.controller.dispose();
     }
@@ -68,9 +145,14 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
   Future<void> _generate() async {
     setState(() => _cooking = true);
     final gemma = ref.read(gemmaProvider);
+    final extraCosts = _extraFixed
+        .where((f) => f.name.text.trim().isNotEmpty && f.value > 0)
+        .map((f) => '${f.name.text.trim()} ${f.amount.text}')
+        .join(', ');
     final prompt =
         'Monthly income KES ${_monthlyIncome.round()}. Fixed costs: rent '
-        '${_rent.text}, transport ${_transport.text}, data ${_data.text}. '
+        '${_rent.text}, transport ${_transport.text}, data ${_data.text}'
+        '${extraCosts.isEmpty ? '' : ', $extraCosts'}. '
         'Make a realistic student budget.';
     final result = await gemma.structured(prompt, schemaHint: 'budget');
     final cats = (result['categories'] as List?) ?? const [];
@@ -81,6 +163,18 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
       drafts.add(_CatDraft(name, limit));
     }
     if (!mounted) return;
+    if (drafts.isEmpty) {
+      // Model hiccup (structured() returns {} on failure): stay on step 2
+      // instead of landing the user on an empty, un-acceptable step 3.
+      setState(() => _cooking = false);
+      final lang = ref.read(langProvider);
+      poa(
+          context,
+          lang.flavor == 'english'
+              ? 'The AI could not build a budget — try again.'
+              : 'AI haikuweza kutengeneza bajeti — jaribu tena.');
+      return;
+    }
     setState(() {
       _drafts = drafts;
       _cooking = false;
@@ -94,6 +188,7 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
   Future<void> _accept() async {
     final lang = ref.read(langProvider);
     final db = ref.read(dbProvider);
+    await _saveInputs();
     await db.delete(db.budgetCategories).go();
     for (final d in _drafts) {
       final limit = double.tryParse(d.controller.text) ?? 0;
@@ -191,6 +286,11 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
         _moneyField(_allowance, lang.flavor == 'english' ? 'Allowance' : 'Pesa za mfukoni', icon: Icons.volunteer_activism_rounded),
         _moneyField(_side, lang.flavor == 'english' ? 'Side hustle' : 'Kazi za kando', icon: Icons.work_rounded),
         _moneyField(_otherIncome, lang.flavor == 'english' ? 'Other' : 'Zinginezo', icon: Icons.add_circle_outline_rounded),
+        ..._extraIncome.map((f) => _customFieldRow(f, _extraIncome, lang)),
+        _addFieldButton(
+          lang.flavor == 'english' ? 'Add income source' : 'Ongeza chanzo cha mapato',
+          () => setState(() => _extraIncome.add(_CustomField())),
+        ),
         const SizedBox(height: 12),
         _runningTotal(lang.flavor == 'english' ? 'Monthly income' : 'Jumla ya mapato', _monthlyIncome, TCC.hustle),
         const SizedBox(height: 20),
@@ -205,9 +305,7 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
 
   // ---- Step 2: fixed costs ----
   Widget _step2(LangPref lang) {
-    final fixed = (double.tryParse(_rent.text) ?? 0) +
-        (double.tryParse(_transport.text) ?? 0) +
-        (double.tryParse(_data.text) ?? 0);
+    final fixed = _fixedTotal;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       children: [
@@ -219,6 +317,11 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
         _moneyField(_rent, lang.flavor == 'english' ? 'Rent' : 'Kodi', icon: Icons.home_rounded),
         _moneyField(_transport, lang.flavor == 'english' ? 'Transport' : 'Usafiri', icon: Icons.directions_bus_rounded),
         _moneyField(_data, lang.flavor == 'english' ? 'Data' : 'Bando', icon: Icons.wifi_rounded),
+        ..._extraFixed.map((f) => _customFieldRow(f, _extraFixed, lang)),
+        _addFieldButton(
+          lang.flavor == 'english' ? 'Add fixed cost' : 'Ongeza gharama nyingine',
+          () => setState(() => _extraFixed.add(_CustomField())),
+        ),
         const SizedBox(height: 12),
         _runningTotal(lang.flavor == 'english' ? 'Fixed costs' : 'Jumla ya gharama', fixed, TCC.warning),
         const SizedBox(height: 20),
@@ -287,6 +390,10 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
             ),
           ),
         ..._drafts.map(_draftRow),
+        _addFieldButton(
+          lang.flavor == 'english' ? 'Add category' : 'Ongeza kategoria',
+          () => _addCategoryDialog(lang),
+        ),
         const SizedBox(height: 8),
         _runningTotal(lang.flavor == 'english' ? 'Total budget' : 'Jumla ya bajeti', total, over ? TCC.danger : TCC.hustle),
         const SizedBox(height: 20),
@@ -313,6 +420,59 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
         ),
       ],
     );
+  }
+
+  Future<void> _addCategoryDialog(LangPref lang) async {
+    final name = TextEditingController();
+    final limit = TextEditingController();
+    final en = lang.flavor == 'english';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: TCC.surface2,
+        title: Text(en ? 'New category' : 'Kategoria mpya',
+            style: const TextStyle(color: TCC.text, fontSize: 18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: name,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              style: const TextStyle(color: TCC.text),
+              decoration:
+                  InputDecoration(labelText: en ? 'Name' : 'Jina'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: limit,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: const TextStyle(color: TCC.text),
+              decoration: InputDecoration(
+                  labelText: en ? 'Monthly limit' : 'Kikomo cha mwezi',
+                  prefixText: 'KSh '),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(en ? 'Cancel' : 'Ghairi')),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(en ? 'Add' : 'Ongeza')),
+        ],
+      ),
+    );
+    if (ok == true && name.text.trim().isNotEmpty) {
+      setState(() => _drafts = [
+            ..._drafts,
+            _CatDraft(name.text.trim(), double.tryParse(limit.text) ?? 0),
+          ]);
+    }
+    name.dispose();
+    limit.dispose();
   }
 
   Widget _draftRow(_CatDraft d) {
@@ -351,6 +511,14 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
               tooltip: 'Reset',
               icon: const Icon(Icons.refresh_rounded, size: 18, color: TCC.textMuted),
               onPressed: () => setState(() => d.reset()),
+            ),
+            IconButton(
+              tooltip: 'Remove',
+              icon: const Icon(Icons.close_rounded, size: 18, color: TCC.textMuted),
+              onPressed: () => setState(() {
+                _drafts = [..._drafts]..remove(d);
+                d.controller.dispose();
+              }),
             ),
           ],
         ),
@@ -402,6 +570,63 @@ class _BudgetWizardState extends ConsumerState<BudgetWizard> {
     );
   }
 
+  Widget _customFieldRow(
+      _CustomField f, List<_CustomField> owner, LangPref lang) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: TextField(
+              controller: f.name,
+              textCapitalization: TextCapitalization.sentences,
+              style: const TextStyle(color: TCC.text, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                labelText: lang.flavor == 'english' ? 'Name' : 'Jina',
+                prefixIcon: const Icon(Icons.edit_rounded,
+                    color: TCC.textMuted, size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: TextField(
+              controller: f.amount,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (_) => setState(() {}),
+              style: const TextStyle(color: TCC.text, fontWeight: FontWeight.w600),
+              decoration: const InputDecoration(prefixText: 'KSh '),
+            ),
+          ),
+          IconButton(
+            tooltip: lang.flavor == 'english' ? 'Remove' : 'Ondoa',
+            icon: const Icon(Icons.close_rounded, size: 18, color: TCC.textMuted),
+            onPressed: () => setState(() {
+              owner.remove(f);
+              f.dispose();
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _addFieldButton(String label, VoidCallback onTap) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.add_rounded, size: 18, color: TCC.hustle),
+        label: Text(label,
+            style: const TextStyle(
+                color: TCC.hustle, fontSize: 13, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
   Widget _runningTotal(String label, double value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -442,6 +667,20 @@ class _CatDraft {
   _CatDraft(this.name, this.original)
       : controller = TextEditingController(text: original.round().toString());
   void reset() => controller.text = original.round().toString();
+}
+
+/// A user-added, user-labeled money row (custom income source / fixed cost).
+class _CustomField {
+  final TextEditingController name;
+  final TextEditingController amount;
+  _CustomField([String label = '', String value = ''])
+      : name = TextEditingController(text: label),
+        amount = TextEditingController(text: value);
+  double get value => double.tryParse(amount.text.trim()) ?? 0;
+  void dispose() {
+    name.dispose();
+    amount.dispose();
+  }
 }
 
 String _kes(num v) => 'KSh ${NumberFormat.decimalPattern().format(v.round())}';

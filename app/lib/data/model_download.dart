@@ -54,11 +54,22 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   StreamSubscription<DownloadProgress>? _sub;
   DateTime? _startedAt;
 
+  /// Slow/flaky campus networks: retry silently with backoff before showing
+  /// "failed". `background_downloader` keeps the partial file, so each retry
+  /// resumes from the last received byte — the user just sees the ring pause.
+  static const _maxAutoRetries = 6;
+  int _autoRetry = 0;
+
   Future<void> start() async {
     if (state.phase == DownloadPhase.done ||
         state.phase == DownloadPhase.downloading) {
       return;
     }
+    _autoRetry = 0;
+    await _begin();
+  }
+
+  Future<void> _begin() async {
     state = state.copyWith(phase: DownloadPhase.downloading, error: null);
     try {
       if (await _mgr.isModelInstalled(FlutterGemmaService.modelSpec)) {
@@ -79,6 +90,7 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   }
 
   void _onProgress(DownloadProgress p) {
+    _autoRetry = 0; // bytes are flowing again — reset the retry budget
     final frac = (p.overallProgress / 100).clamp(0.0, 1.0);
     state = state.copyWith(
       phase: DownloadPhase.downloading,
@@ -113,6 +125,18 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
     _sub?.cancel();
     _sub = null;
     if (!mounted) return;
+    if (_autoRetry < _maxAutoRetries) {
+      _autoRetry++;
+      state = state.copyWith(
+        phase: DownloadPhase.downloading,
+        etaText: 'Reconnecting ($_autoRetry/$_maxAutoRetries)…',
+      );
+      Future.delayed(Duration(seconds: 3 * _autoRetry), () {
+        if (!mounted || state.phase != DownloadPhase.downloading) return;
+        _begin();
+      });
+      return;
+    }
     state = state.copyWith(phase: DownloadPhase.failed, error: e.toString());
   }
 
@@ -127,6 +151,7 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   void resume() => start();
 
   void retry() {
+    _autoRetry = 0;
     state = state.copyWith(phase: DownloadPhase.idle, error: null);
     start();
   }

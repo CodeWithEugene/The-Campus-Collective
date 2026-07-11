@@ -48,10 +48,60 @@ class _TransactionEditState extends ConsumerState<TransactionEdit> {
   bool _loading = false;
   bool get _editing => widget.id != null;
 
+  // User-defined categories (persisted on-device; Transactions.category is
+  // free-text, so custom names flow through the DB unchanged).
+  List<String> _customExpense = [];
+  List<String> _customIncome = [];
+
   @override
   void initState() {
     super.initState();
+    final prefs = ref.read(prefsProvider).valueOrNull;
+    _customExpense = prefs?.getStringList('customExpenseCats') ?? [];
+    _customIncome = prefs?.getStringList('customIncomeCats') ?? [];
     if (_editing || widget.scanId != null) _load();
+  }
+
+  Future<void> _addCustomCategory(LangPref lang) async {
+    final en = lang.flavor == 'english';
+    final name = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: TCC.surface2,
+        title: Text(en ? 'New category' : 'Kategoria mpya',
+            style: const TextStyle(color: TCC.text, fontSize: 18)),
+        content: TextField(
+          controller: name,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          style: const TextStyle(color: TCC.text),
+          decoration: InputDecoration(labelText: en ? 'Name' : 'Jina'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(en ? 'Cancel' : 'Ghairi')),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(en ? 'Add' : 'Ongeza')),
+        ],
+      ),
+    );
+    final label = name.text.trim();
+    name.dispose();
+    if (ok != true || label.isEmpty) return;
+    final prefs = ref.read(prefsProvider).valueOrNull;
+    setState(() {
+      if (_isExpense) {
+        if (!_customExpense.contains(label)) _customExpense.add(label);
+        prefs?.setStringList('customExpenseCats', _customExpense);
+      } else {
+        if (!_customIncome.contains(label)) _customIncome.add(label);
+        prefs?.setStringList('customIncomeCats', _customIncome);
+      }
+      _category = label;
+    });
   }
 
   Future<void> _load() async {
@@ -226,7 +276,9 @@ class _TransactionEditState extends ConsumerState<TransactionEdit> {
         body: const Center(child: CircularProgressIndicator(color: TCC.accent)),
       );
     }
-    final cats = _isExpense ? _expenseCats : _incomeCats;
+    final cats = _isExpense
+        ? [..._expenseCats, ..._customExpense]
+        : [..._incomeCats, ..._customIncome];
     if (_category != null && !cats.contains(_category)) _category = null;
 
     return TccScaffold(
@@ -277,13 +329,21 @@ class _TransactionEditState extends ConsumerState<TransactionEdit> {
                                                                   ? 'Kazi ya kando'
                                                                   : (c == 'Gift'
                                                                       ? 'Zawadi'
-                                                                      : 'Nyingine'))))))))))),
+                                                                      : (c == 'Other'
+                                                                          ? 'Nyingine'
+                                                                          : c)))))))))))),
                       icon: _iconFor(c),
                       selected: _category == c,
                       tint: TCC.hustle,
                       onTap: () => setState(() => _category = c),
                     ))
-                .toList(),
+                .toList()
+              ..add(TccChip(
+                label: lang.flavor == 'english' ? '+ Add' : '+ Ongeza',
+                icon: Icons.add_rounded,
+                tint: TCC.hustle,
+                onTap: () => _addCustomCategory(lang),
+              )),
           ),
           const SizedBox(height: 24),
           TextField(

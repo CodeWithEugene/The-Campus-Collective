@@ -15,6 +15,13 @@ final gemmaProvider = Provider<GemmaService>((ref) {
   // Real on-device Gemma 4 via flutter_gemma (LiteRT-LM). StubGemmaService
   // remains available for widget tests.
   final g = FlutterGemmaService();
+  // listen (not watch): a language change must retarget prompts without
+  // recreating the service — that would reload the 2.4 GB model.
+  ref.listen(
+    langProvider,
+    (_, lang) => g.setLanguage(lang.flavor),
+    fireImmediately: true,
+  );
   ref.onDispose(g.dispose);
   return g;
 });

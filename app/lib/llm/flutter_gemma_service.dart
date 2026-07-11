@@ -24,6 +24,24 @@ class FlutterGemmaService implements GemmaService {
   /// before generating.
   bool _chatSessionStale = false;
 
+  /// Settings → Language flavor; english default (project.md P38).
+  String _language = 'english';
+
+  @override
+  void setLanguage(String flavor) => _language = flavor;
+
+  String get _languageRule => switch (_language) {
+        'swahili' => 'Reply in Kiswahili.',
+        'sheng' =>
+          'Reply in Sheng — casual Kenyan urban slang mixing Kiswahili and English.',
+        _ => 'Reply in English.',
+      };
+
+  String get _cantFinish => switch (_language) {
+        'swahili' || 'sheng' => 'Samahani — sikuweza kumaliza hiyo. Jaribu tena.',
+        _ => "Sorry — I couldn't finish that. Try again.",
+      };
+
   /// Single source of truth for which model the app runs. Shared with the
   /// download flow so "what we download" and "what we load" can never drift.
   static InferenceModelSpec get modelSpec => InferenceModelSpec.fromLegacyUrl(
@@ -111,7 +129,7 @@ class FlutterGemmaService implements GemmaService {
       // ChatController has no catch around this stream (P56 inline-retry UX):
       // never throw, always end with a usable message. The engine error rides
       // along so on-device failures are diagnosable from a screenshot.
-      yield 'Samahani — sikuweza kumaliza hiyo. Jaribu tena.\n\n⚙️ $e';
+      yield '$_cantFinish\n\n⚙️ $e';
     }
   }
 
@@ -122,7 +140,8 @@ class FlutterGemmaService implements GemmaService {
         'Classify this student message into exactly one of: somo, karani, '
         'hustle, ratiba. somo=studying/notes/quizzes, karani=fees/HELB/campus '
         'documents/offices, hustle=money/budget/M-Pesa/business, ratiba=time/'
-        'tasks/deadlines/planning. Reply with only the label.\n\nMessage: $text',
+        'tasks/deadlines/planning. Greetings or small talk are somo. Reply '
+        'with only the label.\n\nMessage: $text',
       );
       final m = RegExp('somo|karani|hustle|ratiba').firstMatch(out.toLowerCase());
       return m?.group(0) ?? 'somo';
@@ -140,7 +159,7 @@ class FlutterGemmaService implements GemmaService {
     try {
       final out = await _oneShot(
         '$prompt\n\nRespond with ONLY valid minified JSON for a "$schemaHint" '
-        'result. No prose, no markdown fences.',
+        'result. No prose, no markdown fences. $_languageRule',
         imagePath: imagePath,
       );
       final match = RegExp(r'\{.*\}', dotAll: true).firstMatch(out);
@@ -201,8 +220,8 @@ class FlutterGemmaService implements GemmaService {
       'ratiba' => 'You are Ratiba, TCC\'s day planner. Be brief and actionable.',
       _ => 'You are Somo, TCC\'s study helper. Summarize clearly and quiz kindly.',
     };
-    return '$persona Reply in the user\'s language mix (English, Kiswahili or '
-        'Sheng). Keep answers short.';
+    return '$persona $_languageRule Keep answers short. Answer directly — '
+        'never prefix your reply with your name or any speaker label.';
   }
 
   @override

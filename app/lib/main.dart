@@ -23,7 +23,12 @@ Future<void> main() async {
   // without this, the first model download throws "FlutterGemma not
   // initialized!". The LiteRT-LM engine is opt-in in 1.2.x and must be
   // registered here for .litertlm inference.
-  await FlutterGemma.initialize(inferenceEngines: [LiteRtLmEngine()]);
+  await FlutterGemma.initialize(
+    inferenceEngines: [LiteRtLmEngine()],
+    // Campus Wi-Fi drops constantly mid-2.4 GB download; give the plugin's
+    // HTTP-aware retry loop a deep budget (auth errors still fail fast).
+    maxDownloadRetries: 30,
+  );
 
   // Backend is distribution-only; failure to reach it must never block the app.
   try {

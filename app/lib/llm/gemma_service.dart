@@ -12,6 +12,10 @@ import 'dart:convert';
 abstract class GemmaService {
   Future<bool> get isModelReady;
 
+  /// Reply language: english (default) | swahili | sheng. Mirrors the
+  /// Settings → Language flavor; every prompt instructs the model with it.
+  void setLanguage(String flavor);
+
   /// Stream a plain text answer token-by-token.
   Stream<String> chat(String prompt, {String? imagePath, String? agent});
 
@@ -32,6 +36,9 @@ abstract class GemmaService {
 class StubGemmaService implements GemmaService {
   @override
   Future<bool> get isModelReady async => true;
+
+  @override
+  void setLanguage(String flavor) {}
 
   @override
   Stream<String> chat(String prompt, {String? imagePath, String? agent}) async* {

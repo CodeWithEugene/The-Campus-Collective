@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../core/app_state.dart';
 import '../../data/content_service.dart';
 import '../../theme/tokens.dart';
@@ -215,10 +216,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               border: Border.all(color: TCC.border),
             ),
-            child: Text(
-              m.content.isEmpty ? '…' : m.content,
-              style: const TextStyle(color: TCC.text, fontSize: 15, height: 1.45),
-            ),
+            child: m.content.isEmpty
+                ? const Text('…',
+                    style: TextStyle(color: TCC.text, fontSize: 15, height: 1.45))
+                // Markdown-rendered: the model speaks **bold**, lists & headers.
+                : GptMarkdown(
+                    m.content,
+                    style: const TextStyle(
+                        color: TCC.text, fontSize: 15, height: 1.45),
+                  ),
           ),
           if (m.lowConfidence)
             Padding(

@@ -35,20 +35,27 @@ class FlutterGemmaService implements GemmaService {
     }
   }
 
-  Future<void> _ensureInit() => _initFuture ??= _init();
+  Future<void> _ensureInit() {
+    // A failed init must not be cached: `??=` would pin the failed Future and
+    // brick every AI feature until app restart over one transient error
+    // (memory pressure, backend hiccup).
+    final future = _initFuture ??= _init();
+    future.catchError((_) {
+      if (identical(_initFuture, future)) _initFuture = null;
+    });
+    return future;
+  }
 
   Future<void> _init() async {
     _plugin.modelManager.setActiveModel(modelSpec);
-    _model = await _plugin.createModel(
-      modelType: ModelType.gemma4,
-      fileType: ModelFileType.litertlm,
-      // KV-cache budget shared by prompt + history + output. 2048 leaves room
-      // for RAG chunks while staying safe on 6 GB devices.
-      maxTokens: 2048,
-      preferredBackend: PreferredBackend.gpu, // CPU fallback on budget chips
-      supportImage: true,
-      maxNumImages: 1, // vision hygiene: one image per turn (project.md §8)
-    );
+    try {
+      _model = await _createModel(PreferredBackend.gpu);
+    } catch (_) {
+      // The engine's own gpu→cpu fallback only catches `Exception`s; a
+      // dlopen/allocation `Error` skips it. Retry CPU explicitly — plugin
+      // resets its singleton state on createModel failure, so this is safe.
+      _model = await _createModel(PreferredBackend.cpu);
+    }
     _chat = await _model!.createChat(
       temperature: 0.7,
       topK: 40,
@@ -57,6 +64,18 @@ class FlutterGemmaService implements GemmaService {
       maxOutputTokens: 512,
     );
   }
+
+  Future<InferenceModel> _createModel(PreferredBackend backend) =>
+      _plugin.createModel(
+        modelType: ModelType.gemma4,
+        fileType: ModelFileType.litertlm,
+        // KV-cache budget shared by prompt + history + output. 2048 leaves room
+        // for RAG chunks while staying safe on 6 GB devices.
+        maxTokens: 2048,
+        preferredBackend: backend,
+        supportImage: true,
+        maxNumImages: 1, // vision hygiene: one image per turn (project.md §8)
+      );
 
   @override
   Stream<String> chat(String prompt, {String? imagePath, String? agent}) async* {
@@ -76,10 +95,11 @@ class FlutterGemmaService implements GemmaService {
       await for (final r in chat.generateChatResponseAsync()) {
         if (r is TextResponse) yield r.token;
       }
-    } catch (_) {
+    } catch (e) {
       // ChatController has no catch around this stream (P56 inline-retry UX):
-      // never throw, always end with a usable message.
-      yield 'Samahani — sikuweza kumaliza hiyo. Jaribu tena.';
+      // never throw, always end with a usable message. The engine error rides
+      // along so on-device failures are diagnosable from a screenshot.
+      yield 'Samahani — sikuweza kumaliza hiyo. Jaribu tena.\n\n⚙️ $e';
     }
   }
 

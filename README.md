@@ -8,7 +8,7 @@ TCC is an Android-first Flutter app that runs **Gemma 4 entirely on the student'
 
 ## 📲 Download the app
 
-**[⬇️ Download the APK (v1.1.5, Android arm64, ~139 MB)](https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk)**
+**[⬇️ Download the APK (v1.2.0, Android arm64, ~139 MB)](https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk)**
 
 1. Download the APK on your Android phone and open it.
 2. If Play Protect warns about an unknown app, tap **More details → Install anyway** (the APK is unsigned-for-store, built straight from this repo).

@@ -1,100 +1,95 @@
-# TCC — 3-Minute Demo Video Script (teleprompter)
+# TCC demo video — recording script (target 3:00)
 
-> Teleprompter for Eugene. Each block = one shot. **Bold = say aloud.** *Italics = what's on screen / action.*
-> Total target: ≤ 3:00. Keep energy up; captions will be burned in (judges may watch muted).
-> Device: film on the BEST Android you can borrow. Show the budget Tecno/Infinix near the end.
-> Pre-cache the model via `adb push` before filming — never download live on camera.
+One continuous story: **hook → who I am → install it yourself → everything offline → how it's built → close.**
 
----
+## Before you press record — staging checklist
 
-## 0:00–0:15 — HOOK (airplane mode FIRST)
-
-*On screen: a real Embu student (e.g. a teammate) holding their phone. Campus backdrop.*
-
-**"This is Aisha — second year, University of Embu. A fee deadline Monday, a HELB letter she can't decode, and fifty bob of data."**
-
-*Action: Aisha flicks her phone to Airplane Mode, on camera. Hold the icon in frame for 2 seconds.*
-
-**"Watch — everything you're about to see happens with zero internet."**
+- **Two phone states.** Record the *install + model download* shot first on a clean install (screen-record separately; speed it up 8–16×). Do the *feature demo* on the phone where the model is already downloaded — never make judges wait on 2.6 GB.
+- **Airplane mode ON for the entire feature demo** — the ✈ icon in the status bar is your proof shot. Point at it.
+- Pre-load real-looking data so nothing is empty: 3–4 timetable classes for **today**, 2 open tasks, 1 deadline (e.g. "HELB appeal — 15 Jul"), one accepted budget, a few transactions.
+- Props: one **printed fee statement** and one page of **handwritten notes**.
+- Language set to **English** at the start (you switch to Kiswahili live).
+- Practice the voice line once so the mic demo lands first take. First transcription after app start loads the audio tower — warm it up off-camera.
+- Clear chat history (Settings) so the routing demo starts clean.
 
 ---
 
-## 0:15–0:55 — KARANI (fees / HELB)
+## The script
 
-*On screen: open TCC → Chat tab. Tap 📄 Fee statement quick-action chip.*
+*(SAY = read aloud · SHOW = what's on screen)*
 
-**"Karani — our bureaucracy agent. She points her camera at the fee statement…"**
+### 0:00–0:12 · HOOK — before your name
 
-*Action: photograph a clean, pre-tested fee statement → sends → Karani Doc Decoded screen.*
+**SHOW:** Phone in hand, status bar visible: **airplane mode on**. Hold it to camera.
 
-**"…and it explains it in plain Swahili, pulls out the balance and the due date…"**
+**SAY:**
+> "This phone has no internet. No bundles, no Wi-Fi — airplane mode. And in the next three minutes it's going to read a fee statement, budget my money, quiz me on my notes, and plan my day — in English, Kiswahili na Sheng. And nothing — nothing — leaves this phone."
 
-*Action: tap the deadline chip → "Weka kwa Ratiba" → Poa! toast.*
+### 0:12–0:20 · NAME + ONE-LINER
 
-**"…and sets the reminder. Every claim is cited to the real University of Embu document — see the source right there. And it tells her: thibitisha na ofisi."**
+**SHOW:** Cut to the GitHub repo page (screen recording starts).
 
-*On screen: citation line visible ("Chanzo: UoEm Fee Structure 2024/25").*
+**SAY:**
+> "I'm Eugene Mutembei from the University of Embu, and this is **The Campus Collective** — a collective of AI agents in every student's pocket, powered by Gemma 4 running entirely on-device."
+
+### 0:20–0:45 · INSTALL IT YOURSELF
+
+**SHOW:** Scroll README → tap the APK link → install (8× speed) → onboarding → "Get your AI ready" download (sped up, progress ring visibly moving) → "Success!" → flick airplane mode ON, hold the icon in frame.
+
+**SAY:**
+> "Everything is public — you can do this right now. One small APK from the README, then TCC downloads its brain once: Gemma 4, about two-point-six gigabytes, on campus Wi-Fi. It auto-resumes when the network drops — this is Kenya, networks drop. Download once… offline forever. So: airplane mode goes ON now, and it stays on."
+
+### 0:45–1:05 · ONE CHAT, FOUR AGENTS + VOICE
+
+**SHOW:** Chat tab. Type *"I need to budget 5k this week"* → Hustle replies in **formatted markdown**. Tap the **mic**, say: *"Nisaidie kupanga siku yangu kesho"* → transcription appears in the field → send.
+
+**SAY:**
+> "One chat box, four specialists. Ask about money — it routes itself to Hustle, the finance agent. And you don't have to type: tap the mic and just speak. That transcription happened **on this phone** — Gemma's own audio model, fully offline. One model doing text, vision, and speech."
+
+### 1:05–1:20 · SPEAK OUR LANGUAGE
+
+**SHOW:** Settings → Language → **Kiswahili**. Back in chat, ask anything → reply arrives in Kiswahili.
+
+**SAY:**
+> "English by default. Switch to Kiswahili or Sheng, and every agent follows — it speaks the way students actually speak. We even hand-collected a Kiembu phrasebook — Embu's own language — because no dataset existed. So we started one."
+
+### 1:20–1:45 · SOMO — NOTES BECOME A QUIZ
+
+**SHOW:** Chat → 📸 Scan notes → photograph the handwritten page → summary → open the **quiz**, answer one question → flip a **flashcard**.
+
+**SAY:**
+> "Exam season. Photograph your handwritten notes — Somo reads them with on-device vision and turns them into a summary, a quiz, and flashcards. A study group in your pocket, at 2 a.m., costing zero bundles."
+
+### 1:45–2:10 · KARANI — THE BUREAUCRACY KILLER
+
+**SHOW:** Scan the printed fee statement → structured fields (balance, due date) → extracted **deadline → Add to schedule** → point at the **"verify with the office" low-confidence banner**.
+
+**SAY:**
+> "This is the one that saves semesters. Fee statement, HELB letter — Karani reads it, pulls the balance and the due date, and hands the deadline straight to my planner. And notice this banner: we engineered against hallucination. The AI only reports what's actually on the document, flags anything sensitive, and always points you back to the office. Trust is a feature."
+
+### 2:10–2:30 · RATIBA + HUSTLE — PLAN THE DAY, PLAN THE MONEY
+
+**SHOW:** Schedule tab → **Generate day plan** → the plan lists the *staged real* classes/tasks/deadline. Quick cuts: budget wizard → **Add income source** ("Chama") → generated budget → copywriter writes a side-hustle ad.
+
+**SAY:**
+> "Ratiba plans my day from my *real* timetable and deadlines — grounded in my data, not imagination. Hustle builds a budget around HELB and M-Pesa reality — with my own income sources, because every hustle is different — and even writes my WhatsApp ad for the side business."
+
+### 2:30–2:45 · HOW IT'S BUILT (still airplane mode)
+
+**SHOW:** Chat history sheet (previous conversations, new chat) → cut to README fine-tune section / Hugging Face model page.
+
+**SAY:**
+> "Every conversation is saved on this device — private by architecture, not by promise. And we didn't stop at stock Gemma: we trained and fine-tuned Gemma 4 E4B on an NVIDIA RTX PRO 6000 Blackwell GPU — nearly four thousand examples we built ourselves from real campus documents, real M-Pesa tariffs, distilled trilingual conversations, and our hand-collected Kiembu data. Published open, Apache 2.0, ungated."
+
+### 2:45–3:00 · CLOSE
+
+**SHOW:** Back to the phone: airplane-mode icon → app home. End card: repo URL + "Download once. Use offline forever."
+
+**SAY:**
+> "No servers. No subscriptions. No data leaving the phone. Just Gemma 4, working for the students who need it most — kwa lugha yetu. The Campus Collective. Download once, use offline forever. **Poa.**"
 
 ---
 
-## 0:55–1:25 — SOMO (study)
+## Cut-for-time priority (if you run over 3:00)
 
-*On screen: Chat → 📸 Soma notes chip → photograph handwritten/printed notes.*
-
-**"Somo turns her notes into a summary and a five-question quiz — explained in Sheng-flavoured Swahili."**
-
-*Action: Somo Result → segmented Muhtasari · Quiz · Flashcards → Anza Quiz.*
-
-**"She tests herself, flips the flashcards… then shares the quiz straight to her class WhatsApp group. Poa!"**
-
-*Action: Share sheet → WhatsApp. Poa! snackbar.*
-
----
-
-## 1:25–1:55 — HUSTLE (money / function calling)
-
-*On screen: Chat. Type a code-switched question.*
-
-**"Hustle is the money agent. 'Nimepata HELB 15k, na side hustle inaniletea 2k kwa wiki — nipange budget.'"**
-
-*Action: send → streamed answer + a tool-call chip `🔧 Hustle anapiga hesabu… → ✓` then a budget card.*
-
-**"Gemma 4's native function calling picks the right tool — here the M-Pesa tariff — and drafts her budget. She can track every shilling against it, week by week."**
-
-*On screen: Budget Dashboard card with ring + category bars.*
-
----
-
-## 1:55–2:30 — THE COLLECTIVE + budget phone + Kiembu
-
-*On screen: quick montage — Ratiba "Panga siku yangu" day plan, the budget card, Karani again.*
-
-**"Four agents, one chat: Somo, Karani, Hustle, Ratiba — a collective in her pocket."**
-
-*Action: cut to the budget Tecno/Infinix running the same app, slower but fully offline.*
-
-**"On a six-gig budget phone it's slower — but still fully offline. And Embu's own language? Kiembu — not Kimeru. No dataset existed, so we collected our own, from students here."**
-
-*On screen: Settings → Language → Kiembu greetings ON → chat empty state "Wĩ mwega! 👋".*
-
----
-
-## 2:30–3:00 — CLOSE
-
-*On screen: splash logo animating, then home. Repo / APK / notebook links on a card.*
-
-**"The Campus Collective — a collective of agents in your pocket. Offline. Kwa lugha yetu. Built on Gemma 4, open source, Apache 2.0."**
-
-**"Repo, APK, and the notebook are all public. Poa."**
-
-*Freeze on the logo. End.*
-
----
-
-## Pre-flight checklist (do before rolling)
-- [ ] Model pre-cached via `adb push` (no live download on camera)
-- [ ] All demo photos pre-tested for clean OCR (fee statement, notes)
-- [ ] Budget phone charged + app open on the Karani screen
-- [ ] Airplane-mode toggle rehearsed (single clean motion)
-- [ ] Captions burned in; phone audio clear
-- [ ] No slides until the close card
+Cut in this order: copywriter ad → flashcard flip → budget custom income → chat history sheet. **Never cut:** the hook, voice transcription, Karani scan + anti-hallucination banner, airplane-mode proof, the fine-tune credit, the close.

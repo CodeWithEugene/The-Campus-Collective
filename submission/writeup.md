@@ -61,12 +61,12 @@ Supabase (distribution only — RLS-locked, sees zero user data)
 
 ## 5 · Our fine-tune: `gemma-4-tcc`
 
-We fine-tuned **Gemma 4 E4B** (Unsloth QLoRA, r=16) on an RTX Pro 6000 — **loss 1.79 → 0.57 over 380 steps on ~3.3k examples** — targeting three skills: trilingual code-switch in real Kenyan-student register, campus-document → strict-JSON extraction, and the app's exact tool-call format.
+We trained and fine-tuned **Gemma 4 E4B** (Unsloth QLoRA, r=16) on an **NVIDIA RTX PRO 6000 Blackwell GPU (96 GB)** — **loss 1.79 → 0.57 over 380 steps on 3,875 training pairs (430 held out for eval)** — targeting three skills: trilingual code-switch in real Kenyan-student register, campus-document → strict-JSON extraction, and the app's exact tool-call format.
 
 The dataset is the interesting part:
 1. **Programmatic pairs** generated from the app's real tool schemas and content packs — known-correct tool calls and extractions, no model in the loop.
 2. **Teacher distillation** — Gemma 4 26B/31B generating campus-scenario conversations (the same recipe as Google's multilingual-Gemma case study).
-3. **Public Swahili SFT** (Aya, Inkuba-instruct) — plus our **hand-collected Kiembu phrasebook**. Kiembu (not Kimeru — a mistake outsiders make) has essentially zero public NLP data, so we collected our own with students on campus.
+3. **Public Swahili instruction data** (the Aya collection) — plus our **hand-collected Kiembu phrasebook**. Kiembu (not Kimeru — a mistake outsiders make) has essentially zero public NLP data, so we collected our own with students on campus.
 
 Published ungated under Apache 2.0: [merged model](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b) · [LoRA adapter](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-lora) · on-device conversion via `litert-torch export_hf` (pipeline in [`gemma_model/`](https://github.com/CodeWithEugene/The-Campus-Collective/tree/main/gemma_model)). The shipped app runs stock E2B today; the fine-tune swaps in per-device via the remote manifest — training was never allowed on the critical path.
 

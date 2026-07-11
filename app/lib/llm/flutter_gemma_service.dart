@@ -17,6 +17,13 @@ class FlutterGemmaService implements GemmaService {
   InferenceChat? _chat;
   Future<void>? _initFuture;
 
+  /// The LiteRT-LM engine holds ONE live native conversation (upstream #966):
+  /// every [_oneShot] createSession closes the chat's conversation out from
+  /// under it, and the next generate throws "Bad state: Session is closed".
+  /// Set after each one-shot; [chat] rebuilds its session (replaying history)
+  /// before generating.
+  bool _chatSessionStale = false;
+
   /// Single source of truth for which model the app runs. Shared with the
   /// download flow so "what we download" and "what we load" can never drift.
   static InferenceModelSpec get modelSpec => InferenceModelSpec.fromLegacyUrl(
@@ -82,6 +89,11 @@ class FlutterGemmaService implements GemmaService {
     try {
       await _ensureInit();
       final chat = _chat!;
+      if (_chatSessionStale) {
+        // fullHistory is a snapshot copy, so it survives the clear inside.
+        await chat.clearHistory(replayHistory: chat.fullHistory);
+        _chatSessionStale = false;
+      }
       final text = '${_systemFor(agent)}\n\n$prompt';
       if (imagePath != null) {
         await chat.addQueryChunk(Message.withImage(
@@ -143,6 +155,9 @@ class FlutterGemmaService implements GemmaService {
   /// pollute the running chat history.
   Future<String> _oneShot(String prompt, {String? imagePath}) async {
     await _ensureInit();
+    // Flag BEFORE creating: createSession closes the chat's conversation
+    // first thing, so even a failed create leaves the chat session dead.
+    _chatSessionStale = true;
     final session = await _model!.createSession(temperature: 0.1, topK: 1);
     try {
       if (imagePath != null) {

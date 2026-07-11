@@ -17,7 +17,7 @@ At the University of Embu, a student's campus survival kit is a budget Tecno or 
 
 | Agent | Job | Gemma 4 capability used |
 |---|---|---|
-| 📚 **Somo** | Photo of notes/past paper → summary, 5-question quiz, flashcards, explained in Sheng-flavoured Swahili | Multimodal vision |
+| 📚 **Somo** | Photo of notes/past paper → summary, 5-question quiz, flashcards — English by default, Kiswahili or Sheng via Settings | Multimodal vision |
 | 📜 **Karani** | Photo of fee statement / HELB letter / timetable / hostel notice → plain-Swahili explanation, structured fields, extracted deadlines, **every claim cited to real UoEm documents** | Vision + on-device RAG |
 | 💸 **Hustle** | AI budget maker + expense tracker + M-Pesa tariff / matatu-fare tools + Sheng side-hustle copywriter | Native function calling |
 | 🗓️ **Ratiba** | "Panga siku yangu" → day plan from photographed timetable + Karani's deadlines + tasks, with local reminders | Function calling + planning |
@@ -57,7 +57,7 @@ Supabase (distribution only — RLS-locked, sees zero user data)
 - Edge Gemma is the weakest tool-caller → few tools, flat schemas, per-agent scoping, and a deterministic keyword-intent fallback if a call is malformed.
 - Budget MediaTek chips often have no usable GPU delegate → token streaming, capped answer lengths, and rich result cards so short answers still feel complete (~2–5 tok/s on CPU fallback vs. 40+ on flagship GPUs).
 - 6 GB RAM floor → E2B (2.6 GB) is the default; the manifest serves our E4B fine-tune only to 8 GB+ devices.
-- 2.6 GB on student data plans → resumable download with sha-256 verify, an explicit "tumia Wi-Fi" warning, detailed exception reporting in the UI for easy debugging, and a Limited Mode so the app is never a dead-end without the model.
+- 2.6 GB on student data plans → resumable download that silently auto-reconnects with backoff on flaky campus Wi-Fi, an explicit "tumia Wi-Fi" warning, size verification with detailed exception reporting in the UI, and a Limited Mode so the app is never a dead-end without the model.
 
 ## 5 · Our fine-tune: `gemma-4-tcc`
 
@@ -87,6 +87,7 @@ Published ungated under Apache 2.0: [merged model](https://huggingface.co/Eugeni
 - **LoRA-on-`.litertlm` is not yet a public API** (open LiteRT-LM feature request) → merge-then-convert with `litert-torch export_hf` instead; the manifest decouples model delivery from app releases.
 - **CPU fallback on budget chips** → streaming UX + short structured outputs, honestly demonstrated on a budget phone in the video.
 - **A fast-moving plugin ecosystem** → pinned versions, an engine-agnostic `GemmaService` interface, and a stub engine that kept the full 40-screen app buildable and testable while the on-device engine was validated.
+- **Real-device debugging, layer by layer** → validating on a physical budget Android surfaced (and fixed) a chain of on-device realities: plugin initialization order, native LiteRT-LM libraries delivered via Dart native-assets build hooks, and the engine's single-live-conversation limit — solved by rebuilding the chat session with history replay whenever the router or an extraction runs. Each fix shipped with visible-error UX so field failures are diagnosable from a screenshot.
 
 ## 8 · Honest limitations
 

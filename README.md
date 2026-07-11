@@ -8,11 +8,11 @@ TCC is an Android-first Flutter app that runs **Gemma 4 entirely on the student'
 
 ## 📲 Download the app
 
-**[⬇️ Download the APK (v1.0.0, Android arm64, ~31 MB)](https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk)**
+**[⬇️ Download the APK (v1.1.5, Android arm64, ~139 MB)](https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk)**
 
 1. Download the APK on your Android phone and open it.
 2. If Play Protect warns about an unknown app, tap **More details → Install anyway** (the APK is unsigned-for-store, built straight from this repo).
-3. On first run, TCC downloads its Gemma 4 model (**2.6–3.6 GB — use Wi-Fi**). After that, everything runs offline forever — try it in airplane mode.
+3. On first run, TCC downloads its Gemma 4 model (**≈2.6 GB — use Wi-Fi**; the download resumes and silently reconnects on flaky networks). After that, everything runs offline forever — try it in airplane mode.
 
 All releases: [GitHub Releases](https://github.com/CodeWithEugene/The-Campus-Collective/releases)
 
@@ -29,12 +29,12 @@ For a student at the University of Embu, campus survival runs on a budget Tecno/
 
 | Agent | What it does |
 |---|---|
-| 📚 **Somo** *(study)* | Photograph handwritten/printed notes or past papers → summary, 5-question quiz, and flashcards, explained in Sheng-flavoured Swahili. Share to WhatsApp. |
+| 📚 **Somo** *(study)* | Photograph handwritten/printed notes or past papers → summary, 5-question quiz, and flashcards — in English by default, or Kiswahili/Sheng via Settings → Language. Share to WhatsApp. |
 | 📜 **Karani** *(bureaucracy)* | Photograph a fee statement, HELB letter, timetable, or hostel notice → plain-Swahili explanation, structured fields, extracted deadlines (handed to Ratiba), with every claim **cited to real University of Embu documents** via on-device RAG. |
 | 💸 **Hustle** *(money)* | Function-calling money agent: AI budget maker ("Nimepata HELB 15k…" → a monthly budget), expense tracking with receipt scanning, M-Pesa tariff and matatu-fare tools, weekly insight cards, and a Sheng copywriter for WhatsApp-Status side-hustle ads. |
 | 🗓️ **Ratiba** *(planner)* | "Panga siku yangu" → builds the day from your photographed class timetable, Karani's extracted deadlines, and your tasks → prioritized plan with local reminders. |
 
-One chat box routes to the right agent automatically; each agent only sees its own 2–4 tools, which keeps edge-model function calling reliable. A Safety screen keeps campus and national emergency contacts (Police 999/112, GBV 1195, campus security) available with zero internet.
+One chat box routes to the right agent automatically; each agent only sees its own 2–4 tools, which keeps edge-model function calling reliable. Replies render rich markdown, chat history persists on-device, and budgets/transactions accept user-defined categories alongside the defaults. A Safety screen keeps campus and national emergency contacts (Police 999/112, GBV 1195, campus security) available with zero internet.
 
 ## Why Gemma 4 — every differentiator, load-bearing
 
@@ -58,9 +58,9 @@ We fine-tuned **Gemma 4 E4B** on an RTX Pro 6000 (96 GB, molab.marimo.io) using 
 |---|---|
 | Merged fine-tuned model | [`Eugeniuss/gemma-4-tcc-e4b`](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b) |
 | LoRA adapter | [`Eugeniuss/gemma-4-tcc-e4b-lora`](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-lora) |
-| On-device `.litertlm` build | publishes to `Eugeniuss/gemma-4-tcc-e4b-litertlm` once [`molab/tcc_convert.py`](gemma_model/molab/tcc_convert.py) runs (until then the app ships stock E2B) |
+| On-device `.litertlm` build (int4, 4.26 GB) | [`Eugeniuss/gemma-4-tcc-e4b-litertlm`](https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b-litertlm) — built by [`molab/tcc_convert.py`](gemma_model/molab/tcc_convert.py) |
 
-The full pipeline (data generation → QLoRA training → merge & push → `litert-torch` on-device conversion → before/after eval) is in [`gemma_model/`](gemma_model/). The shipped app runs stock **Gemma 4 E2B** (safe on 6 GB phones); the fine-tuned E4B build swaps in per-device via a remote model manifest once its on-device conversion is published — model upgrades need no app update.
+The full pipeline (data generation → QLoRA training → merge & push → `litert-torch` on-device conversion → before/after eval) is in [`gemma_model/`](gemma_model/). The shipped app runs stock **Gemma 4 E2B** (safe on 6 GB phones); the fine-tuned E4B `.litertlm` is published and seeded into the remote model manifest (beta channel, 8 GB+ devices) — model upgrades need no app update.
 
 ## Architecture
 

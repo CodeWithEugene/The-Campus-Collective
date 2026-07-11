@@ -361,7 +361,7 @@ table is the Technical Depth evidence. If base E2B is good enough by July 11, sk
 keep the eval.
 
 ### Engineering discipline
-- Pin `flutter_gemma: 1.2.1` — 59 releases and moving fast; do not upgrade mid-hackathon.
+- Pin `flutter_gemma: 1.2.2` (+ `flutter_gemma_litertlm` engine package, registered via `FlutterGemma.initialize(inferenceEngines: [LiteRtLmEngine()])` in `main()`) — the plugin moves fast; do not upgrade mid-hackathon. Native LiteRT-LM libs arrive through Dart native-assets build hooks: after changing these deps, `flutter clean` before building or the `.so`s can be silently missing from the APK.
 - Verify the exact `gemma-4-E2B-it.litertlm` URL + download flow on day 1.
 - Commit steadily to the public repo (evidence of real work), Apache 2.0 from the first commit.
 - Label any unverifiable local figures in-app as "sample data".
@@ -467,7 +467,7 @@ sped-up shot of the onboarding **"Download your AI (~2.6 GB, once, on Wi-Fi)"** 
 
 1. **Log into Kaggle** → join `build-with-gemma-gdg-embu` → accept rules → verify identity →
    copy Overview/Evaluation/Rules/Data verbatim into `submission/rules-verbatim.md`.
-2. Install Flutter toolchain + Android SDK; scaffold the app; add `flutter_gemma: 1.2.1` (pinned);
+2. Install Flutter toolchain + Android SDK; scaffold the app; add `flutter_gemma: 1.2.2` + `flutter_gemma_litertlm` (pinned);
    confirm the `gemma-4-E2B-it.litertlm` download URL and get chat running on a real phone.
 3. Set up the ungated model mirror (GitHub Release asset) + `adb push` pre-cache flow.
 4. **Validate the training pipeline early**: smoke-test the molab RTX Pro 6000 (load E2B, run one

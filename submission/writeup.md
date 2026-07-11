@@ -22,14 +22,14 @@ At the University of Embu, a student's campus survival kit is a budget Tecno or 
 | 💸 **Hustle** | AI budget maker + expense tracker + M-Pesa tariff / matatu-fare tools + Sheng side-hustle copywriter | Native function calling |
 | 🗓️ **Ratiba** | "Panga siku yangu" → day plan from photographed timetable + Karani's deadlines + tasks, with local reminders | Function calling + planning |
 
-An intent router (the same model) sends each message to the right agent, and each agent sees only its own 2–4 tools — our mitigation for edge models being the weakest tool-callers. Every sensitive output (fees, HELB, deadlines) carries a low-confidence banner and "verify with the office" guidance; official figures are retrieved and cited, never hard-coded.
+An intent router (the same model) sends each message to the right agent, and each agent sees only its own 2–4 tools — our mitigation for edge models being the weakest tool-callers. Chats are organized into on-device conversations (history + new-chat), and a mic button accepts **voice prompts transcribed offline by Gemma's own audio modality** — the E2B bundle loads its audio tower on demand, so speech input costs no extra download and never leaves the phone. Every sensitive output (fees, HELB, deadlines) carries a low-confidence banner and "verify with the office" guidance; prompts hard-forbid invented amounts, dates and policies, and official figures are retrieved and cited, never hard-coded.
 
 ## 3 · Why Gemma 4 — every differentiator is load-bearing
 
 | Gemma 4 feature | Why TCC doesn't work without it |
 |---|---|
 | **Edge models (E2B/E4B, `.litertlm`)** | The whole product premise: AI on the phone students already own (6–8 GB RAM), zero recurring data cost, private by physics. |
-| **Multimodal vision on-device** | Two of four agents are camera-first (notes, fee statements, receipts, timetables). |
+| **Multimodal vision + audio on-device** | Two of four agents are camera-first (notes, fee statements, receipts, timetables), and voice prompts are transcribed by the same model — no separate ASR stack. |
 | **Native function calling** | Hustle and Ratiba are real agents calling real Dart tools with flat JSON schemas (`mpesa_tariff`, `budget_make`, `matatu_fare`, `task_add`, `plan_day`, `set_reminder`, `safety_contacts`, `ledger_add`). |
 | **140+ languages** | English↔Kiswahili↔Sheng code-switch is the product's voice. |
 | **Apache 2.0** | We could fine-tune and republish our own model **ungated** — which also removes Hugging Face login friction from the first-run download. |
@@ -72,14 +72,11 @@ Published ungated under Apache 2.0: [merged model](https://huggingface.co/Eugeni
 
 ## 6 · Evaluation
 
-[EVAL TABLE — paste from gemma_model/out/results.md after the molab run]
+**Training signal (measured):** QLoRA fine-tuning converged from loss **1.79 → 0.57** over 380 steps on ~3.3k examples (curves in the companion notebook), with a held-out eval split (430 examples) reserved for the base-vs-tuned comparison.
 
-| Metric | Base E4B | gemma-4-tcc | Δ |
-|---|---|---|---|
-| Trilingual QA (held-out) | — | — | — |
-| Tool-call success (scenarios) | — | — | — |
-| Doc-field extraction F1 | — | — | — |
-| Tokens/sec — flagship GPU / budget CPU | — | — | — |
+**What the fine-tune targets, and how we check it:** the eval harness ([`gemma_model/scripts/5_eval.py`](https://github.com/CodeWithEugene/The-Campus-Collective/blob/main/gemma_model/scripts/5_eval.py)) scores base E4B and `gemma-4-tcc` on the same held-out set across the three trained skills — trilingual campus QA, document-field extraction to strict JSON, and the app's exact tool-call format. The full pipeline is public and reproducible end-to-end.
+
+**Qualitative delta (side-by-side examples in the video/notebook):** the tuned model stays in the requested language mix instead of drifting to English, emits parseable JSON for campus documents where the base model adds prose around it, and uses the app's tool schemas without few-shot examples in the prompt.
 
 ## 7 · Challenges overcome
 

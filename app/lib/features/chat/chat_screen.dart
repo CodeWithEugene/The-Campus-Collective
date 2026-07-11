@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import '../../core/app_state.dart';
 import '../../data/content_service.dart';
 import '../../theme/tokens.dart';
@@ -20,7 +24,10 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _recorder = AudioRecorder();
   String _greeting = 'Wĩ mwega!';
+  bool _recording = false;
+  bool _transcribing = false;
 
   @override
   void initState() {
@@ -57,6 +64,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       showBack: false,
       title: 'TCC',
       actions: [
+        IconButton(
+          tooltip: lang.flavor == 'english' ? 'New chat' : 'Chat mpya',
+          icon: const Icon(Icons.add_comment_outlined, color: TCC.textMuted),
+          onPressed: () => ref.read(chatProvider.notifier).newChat(),
+        ),
+        IconButton(
+          tooltip: lang.flavor == 'english' ? 'Chat history' : 'Historia',
+          icon: const Icon(Icons.history_rounded, color: TCC.textMuted),
+          onPressed: _historySheet,
+        ),
         IconButton(
           icon: const Icon(Icons.tune_rounded, color: TCC.textMuted),
           onPressed: () => context.go('/mimi'),
@@ -257,15 +274,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
-                hintText: switch (lang.flavor) {
-                  'english' => 'Ask anything...',
-                  'sheng' => 'Uliza chochote...',
-                  _ => 'Uliza chochote...',
-                },
+                hintText: _recording
+                    ? (lang.flavor == 'english'
+                        ? 'Listening… tap ■ when done'
+                        : 'Nasikiliza… gusa ■ ukimaliza')
+                    : _transcribing
+                        ? (lang.flavor == 'english'
+                            ? 'Transcribing…'
+                            : 'Inaandika…')
+                        : switch (lang.flavor) {
+                            'english' => 'Ask anything...',
+                            'sheng' => 'Uliza chochote...',
+                            _ => 'Uliza chochote...',
+                          },
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          IconButton(
+            tooltip: lang.flavor == 'english' ? 'Voice prompt' : 'Tumia sauti',
+            onPressed: _transcribing ? null : _toggleVoice,
+            icon: _transcribing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: TCC.accent),
+                  )
+                : Icon(
+                    _recording ? Icons.stop_circle_rounded : Icons.mic_rounded,
+                    color: _recording ? TCC.danger : TCC.textMuted,
+                  ),
+          ),
+          const SizedBox(width: 4),
           GestureDetector(
             onTap: _send,
             child: Container(
@@ -278,6 +318,169 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _historySheet() {
+    final lang = ref.read(langProvider);
+    final en = lang.flavor == 'english';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: TCC.surface2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final convs = ref.watch(conversationsProvider);
+            final currentId = ref.watch(chatProvider.notifier).conversationId;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                  child: Row(
+                    children: [
+                      Text(en ? 'Chats' : 'Chats zako',
+                          style: const TextStyle(
+                              color: TCC.text,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700)),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () {
+                          ref.read(chatProvider.notifier).newChat();
+                          Navigator.pop(c);
+                        },
+                        icon: const Icon(Icons.add_rounded,
+                            size: 18, color: TCC.accent),
+                        label: Text(en ? 'New chat' : 'Chat mpya',
+                            style: const TextStyle(color: TCC.accent)),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: convs.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(color: TCC.accent),
+                    ),
+                    error: (_, _) => const SizedBox.shrink(),
+                    data: (rows) => rows.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                                en
+                                    ? 'No chats yet — say hi!'
+                                    : 'Hakuna chats bado — anza!',
+                                style: const TextStyle(color: TCC.textMuted)),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: rows.length,
+                            itemBuilder: (context, i) {
+                              final conv = rows[i];
+                              return ListTile(
+                                leading: Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 20,
+                                  color: conv.id == currentId
+                                      ? TCC.accent
+                                      : TCC.textMuted,
+                                ),
+                                title: Text(conv.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: TCC.text,
+                                        fontWeight: conv.id == currentId
+                                            ? FontWeight.w700
+                                            : FontWeight.w400)),
+                                subtitle: Text(
+                                    DateFormat('d MMM, HH:mm')
+                                        .format(conv.updatedAt),
+                                    style: const TextStyle(
+                                        color: TCC.textMuted, fontSize: 12)),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline_rounded,
+                                      size: 20, color: TCC.textMuted),
+                                  onPressed: () => ref
+                                      .read(chatProvider.notifier)
+                                      .deleteConversation(conv.id),
+                                ),
+                                onTap: () {
+                                  ref.read(chatProvider.notifier).open(conv.id);
+                                  Navigator.pop(c);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _toggleVoice() async {
+    final lang = ref.read(langProvider);
+    final en = lang.flavor == 'english';
+    if (_transcribing) return;
+    if (_recording) {
+      final path = await _recorder.stop();
+      setState(() {
+        _recording = false;
+        _transcribing = true;
+      });
+      String text = '';
+      if (path != null) {
+        text = await ref.read(gemmaProvider).transcribe(path);
+        try {
+          await File(path).delete();
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      setState(() => _transcribing = false);
+      if (text.isEmpty) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+              content: Text(en
+                  ? "Didn't catch that — try again closer to the mic."
+                  : 'Sikusikia vizuri — jaribu tena karibu na mic.')));
+        return;
+      }
+      _input.text = _input.text.isEmpty ? text : '${_input.text} $text';
+      _input.selection =
+          TextSelection.collapsed(offset: _input.text.length);
+      return;
+    }
+    if (!await _recorder.hasPermission()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content: Text(en
+                ? 'Microphone permission is needed for voice prompts.'
+                : 'Ruhusa ya mic inahitajika kutumia sauti.')));
+      return;
+    }
+    final dir = await getTemporaryDirectory();
+    // Gemma's audio executor expects 16 kHz mono WAV.
+    await _recorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.wav,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+      path: p.join(dir.path, 'voice_prompt.wav'),
+    );
+    if (mounted) setState(() => _recording = true);
   }
 
   void _attachSheet() {
@@ -313,6 +516,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void dispose() {
     _input.dispose();
     _scroll.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 }

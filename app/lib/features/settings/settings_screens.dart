@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../ui/widgets.dart';
+import '../chat/chat_controller.dart';
 
 // ===========================================================================
 // Shared building blocks
@@ -830,6 +831,8 @@ class PrivacySettings extends ConsumerWidget {
     if (ok != true) return;
     final db = ref.read(dbProvider);
     await db.delete(db.chatMessages).go();
+    await db.delete(db.conversations).go();
+    ref.read(chatProvider.notifier).newChat(); // drop stale in-memory view
     if (context.mounted) poa(context, 'Chat history cleared');
   }
 
@@ -881,7 +884,9 @@ class PrivacySettings extends ConsumerWidget {
       await db.delete(db.deadlines).go();
       await db.delete(db.timetableClasses).go();
       await db.delete(db.chatMessages).go();
+      await db.delete(db.conversations).go();
     });
+    ref.read(chatProvider.notifier).newChat(); // drop stale in-memory view
     if (context.mounted) poa(context, 'All data cleared');
   }
 

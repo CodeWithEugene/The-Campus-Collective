@@ -29,6 +29,10 @@ abstract class GemmaService {
     required String schemaHint,
   });
 
+  /// Transcribe a recorded voice prompt (16 kHz mono WAV) fully on-device
+  /// via Gemma's audio modality. Returns the plain transcription text.
+  Future<String> transcribe(String audioPath);
+
   void dispose() {}
 }
 
@@ -39,6 +43,12 @@ class StubGemmaService implements GemmaService {
 
   @override
   void setLanguage(String flavor) {}
+
+  @override
+  Future<String> transcribe(String audioPath) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    return 'Nataka kupanga budget ya wiki hii';
+  }
 
   @override
   Stream<String> chat(String prompt, {String? imagePath, String? agent}) async* {

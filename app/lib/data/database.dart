@@ -69,6 +69,7 @@ class Scans extends Table {
 
 class ChatMessages extends Table {
   IntColumn get id => integer().autoIncrement()();
+  IntColumn get conversationId => integer().nullable()(); // null = legacy rows, backfilled in v2
   TextColumn get role => text()(); // user|agent|system
   TextColumn get agent => text().nullable()(); // somo|karani|hustle|ratiba|router
   TextColumn get content => text()();
@@ -77,6 +78,13 @@ class ChatMessages extends Table {
   RealColumn get confidence => real().withDefault(const Constant(1))();
   BoolColumn get topicSensitive => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class Conversations extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text().withDefault(const Constant('New chat'))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 @DriftDatabase(
@@ -88,13 +96,38 @@ class ChatMessages extends Table {
     TimetableClasses,
     Scans,
     ChatMessages,
+    Conversations,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_open());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(conversations);
+            await m.addColumn(chatMessages, chatMessages.conversationId);
+            // Adopt pre-v2 messages into a first conversation so history
+            // written before the upgrade stays visible.
+            final legacy = await (select(chatMessages)
+                  ..where((t) => t.conversationId.isNull())
+                  ..limit(1))
+                .get();
+            if (legacy.isNotEmpty) {
+              final id = await into(conversations).insert(
+                  ConversationsCompanion.insert(
+                      title: const Value('Earlier chat')));
+              await (update(chatMessages)
+                    ..where((t) => t.conversationId.isNull()))
+                  .write(ChatMessagesCompanion(conversationId: Value(id)));
+            }
+          }
+        },
+      );
 
   static QueryExecutor _open() {
     return LazyDatabase(() async {

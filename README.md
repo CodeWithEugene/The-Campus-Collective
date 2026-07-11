@@ -34,14 +34,14 @@ For a student at the University of Embu, campus survival runs on a budget Tecno/
 | 💸 **Hustle** *(money)* | Function-calling money agent: AI budget maker ("Nimepata HELB 15k…" → a monthly budget), expense tracking with receipt scanning, M-Pesa tariff and matatu-fare tools, weekly insight cards, and a Sheng copywriter for WhatsApp-Status side-hustle ads. |
 | 🗓️ **Ratiba** *(planner)* | "Panga siku yangu" → builds the day from your photographed class timetable, Karani's extracted deadlines, and your tasks → prioritized plan with local reminders. |
 
-One chat box routes to the right agent automatically; each agent only sees its own 2–4 tools, which keeps edge-model function calling reliable. Replies render rich markdown, chat history persists on-device, and budgets/transactions accept user-defined categories alongside the defaults. A Safety screen keeps campus and national emergency contacts (Police 999/112, GBV 1195, campus security) available with zero internet.
+One chat box routes to the right agent automatically; each agent only sees its own 2–4 tools, which keeps edge-model function calling reliable. Replies render rich markdown; chats are organized into conversations with a history view and one-tap new chat, all persisted on-device. A mic button takes **voice prompts, transcribed fully offline by Gemma's own audio modality** — no cloud speech API, no extra model download. Budgets and transactions accept user-defined categories alongside the defaults. A Safety screen keeps campus and national emergency contacts (Police 999/112, GBV 1195, campus security) available with zero internet.
 
 ## Why Gemma 4 — every differentiator, load-bearing
 
 | Gemma 4 capability | How TCC uses it |
 |---|---|
 | **On-device edge models** (E2B ≈ 2.6 GB, E4B ≈ 3.65 GB `.litertlm`) | Runs via LiteRT-LM / `flutter_gemma` on the 6–8 GB RAM phones students actually own. The whole demo works in airplane mode. |
-| **Multimodal vision** | Somo reads notes and past papers; Karani reads fee statements, HELB letters, receipts, timetables — straight from the camera. |
+| **Multimodal vision + audio** | Somo reads notes and past papers; Karani reads fee statements, HELB letters, receipts, timetables — straight from the camera. The same model transcribes voice prompts offline (E2B loads its audio tower on demand). |
 | **Native function calling** | Hustle and Ratiba call real Dart tools (`mpesa_tariff`, `budget_make`, `matatu_fare`, `task_add`, `plan_day`, `set_reminder`, `safety_contacts`, `ledger_add`) with flat JSON schemas. |
 | **140+ languages** | English/Kiswahili/Sheng code-switching, plus our fine-tune (below). |
 | **Apache 2.0** | We fine-tuned Gemma 4 and host our own model **ungated** on Hugging Face — no login friction on first-run download. |

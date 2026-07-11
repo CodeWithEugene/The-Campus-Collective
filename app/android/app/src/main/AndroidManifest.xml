@@ -3,6 +3,8 @@
          All AI inference is offline; INTERNET is delivery-only. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Voice prompts: recorded and transcribed fully on-device by Gemma. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="TCC"
         android:name="${applicationName}"

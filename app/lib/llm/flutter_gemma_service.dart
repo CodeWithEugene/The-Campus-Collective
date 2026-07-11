@@ -100,6 +100,9 @@ class FlutterGemmaService implements GemmaService {
         preferredBackend: backend,
         supportImage: true,
         maxNumImages: 1, // vision hygiene: one image per turn (project.md §8)
+        // Voice prompts: the E2B bundle loads its audio model on demand, so
+        // this costs nothing until the first transcription.
+        supportAudio: true,
       );
 
   @override
@@ -159,7 +162,10 @@ class FlutterGemmaService implements GemmaService {
     try {
       final out = await _oneShot(
         '$prompt\n\nRespond with ONLY valid minified JSON for a "$schemaHint" '
-        'result. No prose, no markdown fences. $_languageRule',
+        'result. No prose, no markdown fences. $_languageRule '
+        'Use ONLY information actually present in the provided text/image: '
+        'if a field is not visible, use null or omit it — never guess '
+        'amounts, dates or names.',
         imagePath: imagePath,
       );
       final match = RegExp(r'\{.*\}', dotAll: true).firstMatch(out);
@@ -167,6 +173,33 @@ class FlutterGemmaService implements GemmaService {
       return jsonDecode(match.group(0)!) as Map<String, dynamic>;
     } catch (_) {
       return {};
+    }
+  }
+
+  @override
+  Future<String> transcribe(String audioPath) async {
+    try {
+      await _ensureInit();
+      _chatSessionStale = true; // one-shot session displaces the chat's conversation
+      final session = await _model!.createSession(
+        temperature: 0.1,
+        topK: 1,
+        enableAudioModality: true,
+      );
+      try {
+        await session.addQueryChunk(Message.withAudio(
+          text: 'Transcribe this audio exactly as spoken. The speaker may mix '
+              'English, Kiswahili and Sheng. Output ONLY the transcription — '
+              'no commentary, no translation.',
+          audioBytes: await File(audioPath).readAsBytes(),
+          isUser: true,
+        ));
+        return (await session.getResponse()).trim();
+      } finally {
+        await session.close();
+      }
+    } catch (_) {
+      return ''; // caller shows a "didn't catch that" state on empty
     }
   }
 
@@ -221,7 +254,12 @@ class FlutterGemmaService implements GemmaService {
       _ => 'You are Somo, TCC\'s study helper. Summarize clearly and quiz kindly.',
     };
     return '$persona $_languageRule Keep answers short. Answer directly — '
-        'never prefix your reply with your name or any speaker label.';
+        'never prefix your reply with your name or any speaker label. '
+        'NEVER invent specific facts: if you do not actually know a fee '
+        'amount, date, deadline, phone number, office procedure or policy, '
+        'say you are not sure and tell the student to confirm with the '
+        'relevant campus office. General advice is fine; made-up numbers '
+        'are not.';
   }
 
   @override

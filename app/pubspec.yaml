@@ -1,7 +1,7 @@
 name: campus_collective
 description: "The Campus Collective — an offline-first, on-device AI campus companion."
 publish_to: "none"
-version: 1.1.5+3
+version: 1.2.0+4
 
 environment:
   sdk: ^3.11.5
@@ -41,6 +41,7 @@ dependencies:
   intl: ^0.20.2
   flutter_gemma_litertlm: ^1.0.2
   gpt_markdown: ^1.1.7
+  record: ^7.1.1
 
 dev_dependencies:
   flutter_test:

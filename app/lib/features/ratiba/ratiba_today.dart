@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' show Value, OrderingTerm, OrderingMode;
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -404,21 +404,63 @@ class _DayPlanCardState extends ConsumerState<_DayPlanCard> {
   bool _generating = false;
 
   Future<void> _generate() async {
-    final lang = ref.read(langProvider);
     setState(() {
       _generating = true;
       _generated = '';
     });
     final gemma = ref.read(gemmaProvider);
-    final buffer = StringBuffer();
-    final prompt = lang.flavor == 'english'
-        ? 'Plan my day today. I have classes, tasks, and deadlines.'
-        : 'Panga siku yangu ya leo. Nina madarasa, tasks na deadlines.';
+    final db = ref.read(dbProvider);
 
-    await for (final token in gemma.chat(
-      prompt,
-      agent: 'ratiba',
-    )) {
+    // Ground the plan in the student's REAL data — an ungrounded "plan my
+    // day" makes the model invent classes and deadlines.
+    final now = DateTime.now();
+    final classes = await (db.select(db.timetableClasses)
+          ..where((c) => c.weekday.equals(now.weekday)))
+        .get();
+    final tasks = await (db.select(db.tasks)
+          ..where((t) => t.done.equals(false))
+          ..limit(10))
+        .get();
+    final deadlines = await (db.select(db.deadlines)
+          ..where((d) => d.dueAt.isBiggerOrEqualValue(
+              DateTime(now.year, now.month, now.day)))
+          ..orderBy([(d) => OrderingTerm.asc(d.dueAt)])
+          ..limit(5))
+        .get();
+
+    final sb = StringBuffer('Plan my day today (${DateFormat('EEEE').format(now)}).\n');
+    if (classes.isEmpty) {
+      sb.writeln('Classes today: none.');
+    } else {
+      sb.writeln('Classes today:');
+      for (final c in classes) {
+        sb.writeln('- ${c.unit} ${c.startTime}-${c.endTime}'
+            '${c.venue == null ? '' : ' at ${c.venue}'}');
+      }
+    }
+    if (tasks.isEmpty) {
+      sb.writeln('Open tasks: none.');
+    } else {
+      sb.writeln('Open tasks:');
+      for (final t in tasks) {
+        sb.writeln('- ${t.title}'
+            '${t.dueAt == null ? '' : ' (due ${DateFormat('d MMM').format(t.dueAt!)})'}');
+      }
+    }
+    if (deadlines.isEmpty) {
+      sb.writeln('Upcoming deadlines: none.');
+    } else {
+      sb.writeln('Upcoming deadlines:');
+      for (final d in deadlines) {
+        sb.writeln('- ${d.title} (${DateFormat('d MMM').format(d.dueAt)})');
+      }
+    }
+    sb.writeln('Make a short prioritized plan using ONLY the items above — '
+        'do not invent classes, tasks or deadlines. If everything is empty, '
+        'suggest how to use the free day well.');
+
+    final buffer = StringBuffer();
+    await for (final token in gemma.chat(sb.toString(), agent: 'ratiba')) {
       buffer.write(token);
       if (mounted) setState(() => _generated = buffer.toString());
     }

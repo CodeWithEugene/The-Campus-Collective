@@ -1,6 +1,10 @@
 # The Campus Collective — a collective of AI agents in every student's pocket. Offline. Kwa lugha yetu.
 
-> **Video:** [YOUTUBE LINK — add before submitting] · **Repo:** https://github.com/CodeWithEugene/The-Campus-Collective · **APK:** https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk · **Fine-tuned model:** https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b · **Companion notebook:** [KAGGLE NOTEBOOK LINK — add before submitting]
+> **Video:** https://youtu.be/ra2TqcAfUy8  
+> **Repo:** https://github.com/CodeWithEugene/The-Campus-Collective  
+> **APK:** https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk  
+> **Fine-tuned model:** https://huggingface.co/Eugeniuss/gemma-4-tcc-e4b  
+> **Companion notebook:** https://github.com/CodeWithEugene/The-Campus-Collective/blob/main/gemma_model/notebooks/marimo_train.py
 
 ## 1 · The problem (it's not hypothetical)
 

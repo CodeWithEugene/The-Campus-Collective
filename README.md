@@ -6,6 +6,8 @@ TCC is an Android-first Flutter app that runs **Gemma 4 entirely on the student'
 
 > Built for **"Build with Gemma: The Campus Survival Guide"** — GDG on Campus, University of Embu · July 17, 2026 · [Kaggle hackathon](https://www.kaggle.com/competitions/build-with-gemma-gdg-embu)
 
+**[▶️ Watch the 3-minute demo video](https://youtu.be/ra2TqcAfUy8)** — everything shown runs in airplane mode.
+
 ## 📲 Download the app
 
 **[⬇️ Download the APK (v1.2.0, Android arm64, ~139 MB)](https://github.com/CodeWithEugene/The-Campus-Collective/releases/latest/download/app-release.apk)**

@@ -1,5 +1,11 @@
 # TCC demo video — recording script (target 3:00)
 
+## 3-Sentence Pitch
+
+**Problem:** African university students are priced out of AI — cloud tools need expensive data bundles, don't understand their languages, and can't be trusted with personal documents. **Solution:** The Campus Collective is a fully offline Android app that runs Gemma 4 on-device with four specialist agents that scan documents, budget money, study notes, and plan your day — in English, Kiswahili, Sheng, and Kiembu. **Uniqueness:** No servers, no subscriptions, no data leaving the phone — just a fine-tuned model trained on real campus documents, working for students who need it most, at zero cost.
+
+---
+
 One continuous story: **hook → who I am → install it yourself → everything offline → how it's built → close.**
 
 ## Before you press record — staging checklist
